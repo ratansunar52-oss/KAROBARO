@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Family Guardian - Parent Admin Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS v2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Leaflet CSS & JS for Live Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              100: '#ccfbf1',
+              500: '#14b8a6',
+              600: '#0d9488',
+              700: '#0f766e',
+            },
+            slate: {
+              850: '#151e2e',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .sos-pulse {
+      animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .nav-active {
+      background: linear-gradient(to right, rgba(6, 182, 212, 0.15), rgba(16, 185, 129, 0.08));
+      color: #38bdf8;
+      border-left: 3px solid #06b6d4;
+      font-weight: 700;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans antialiased selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- ========================================================================= -->
+  <!-- AUTHENTICATION VIEW (Visible when logged out) -->
+  <!-- ========================================================================= -->
+  <section id="authSection" class="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <!-- Glow background decoration -->
+      <div class="absolute -top-24 -right-24 w-52 h-52 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -left-24 w-52 h-52 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="text-center mb-6">
+        <div class="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-500 items-center justify-center mb-3 text-slate-950 shadow-lg shadow-cyan-500/25">
+          <i data-lucide="shield-check" class="w-8 h-8 stroke-[2.5]"></i>
+        </div>
+        <h2 id="authTitle" class="text-xl font-bold text-white">Parent Portal Login</h2>
+        <p class="text-xs text-slate-400 mt-1">Real-time location, audio check-ins & live camera monitoring</p>
+      </div>
+
+      <!-- Tabs: Sign In / Sign Up -->
+      <div class="flex border-b border-slate-800 mb-6 text-sm">
+        <button id="tabSignIn" class="flex-1 py-2.5 font-semibold text-cyan-400 border-b-2 border-cyan-400 text-center transition">Sign In</button>
+        <button id="tabSignUp" class="flex-1 py-2.5 font-medium text-slate-400 hover:text-slate-200 text-center transition">Create Account</button>
+      </div>
+
+      <form id="authForm" class="space-y-4">
+        <div id="fullNameGroup" class="hidden">
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+            <input type="text" id="authName" placeholder="e.g. Ratan Sunar" class="w-full bg-slate-850 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+            <input type="email" id="authEmail" required placeholder="parent@family.com" class="w-full bg-slate-850 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-semibold text-slate-300">Password</label>
+            <span class="text-[10px] text-slate-500">Min 6 characters</span>
+          </div>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-500 absolute left-3 top-3"></i>
+            <input type="password" id="authPassword" required minlength="6" placeholder="••••••••" class="w-full bg-slate-850 border border-slate-700 rounded-xl pl-9 pr-10 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500" />
+            <button type="button" id="togglePasswordBtn" class="absolute right-3 top-2.5 text-slate-400 hover:text-white transition">
+              <i data-lucide="eye" id="togglePasswordIcon" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+
+        <div id="authAlert" class="hidden p-3.5 rounded-xl text-xs space-y-2"></div>
+
+        <button type="submit" id="authSubmitBtn" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 font-bold text-slate-950 text-sm transition shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span id="authSubmitText">Sign In to Dashboard</span>
+        </button>
+
+        <!-- Quick Credentials Autofill Buttons -->
+        <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
+          <span>Quick fill:</span>
+          <div class="flex gap-2">
+            <button type="button" id="fillUserAccountBtn" class="text-cyan-400 hover:underline">Ratan Account</button>
+            <span>•</span>
+            <button type="button" id="fillDemoAccountBtn" class="text-slate-400 hover:underline">Demo Parent</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- MAIN APP CONTAINER WITH MODERN SIDEBAR NAVIGATION -->
+  <!-- ========================================================================= -->
+  <div id="dashboardSection" class="hidden min-h-screen flex flex-col bg-slate-950">
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden lg:hidden"></div>
+
+    <!-- Top Sticky Header Bar -->
+    <header class="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 h-16 flex items-center justify-between px-4 sm:px-6">
+      <div class="flex items-center space-x-3">
+        <!-- Mobile Hamburger Button -->
+        <button id="sidebarToggleBtn" class="lg:hidden p-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition" aria-label="Toggle Navigation">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Logo & Active View Title -->
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center text-slate-950 font-black shadow-md shadow-cyan-500/20">
+            <i data-lucide="shield-check" class="w-5 h-5 stroke-[2.5]"></i>
+          </div>
+          <div class="hidden sm:block">
+            <h1 class="text-sm font-bold text-white flex items-center gap-2">
+              Family Guardian
+              <span id="headerLiveStatusPill" class="text-[10px] bg-emerald-500/10 text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/20">Synced</span>
+            </h1>
+            <p id="currentPageTitle" class="text-[11px] text-cyan-400 font-medium">Dashboard Overview</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header Active Streaming Badges & Parent User Profile -->
+      <div class="flex items-center space-x-3">
+        <!-- Active Audio Banner Pill in Header -->
+        <div id="headerAudioPill" class="hidden cursor-pointer px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-xs font-bold items-center gap-1.5 animate-pulse" title="Microphone Active - Click to open Audio View">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>MIC LIVE</span>
+          <span id="headerAudioTimer" class="font-mono text-[10px]">00:00</span>
+        </div>
+
+        <!-- Active Camera Banner Pill in Header -->
+        <div id="headerCameraPill" class="hidden cursor-pointer px-2.5 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-bold items-center gap-1.5 animate-pulse" title="Camera Active - Click to open Camera View">
+          <span class="w-2 h-2 rounded-full bg-red-500"></span>
+          <span>CAM LIVE</span>
+          <span id="headerCameraTimer" class="font-mono text-[10px]">00:00</span>
+        </div>
+
+        <!-- User Profile Pill -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-850 rounded-xl border border-slate-800 text-right">
+          <div class="w-7 h-7 rounded-lg bg-slate-800 text-cyan-400 flex items-center justify-center font-bold text-xs">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <p id="parentUserName" class="text-xs font-bold text-slate-200 leading-none">Parent</p>
+            <p id="parentUserEmail" class="text-[10px] text-slate-400 leading-tight mt-0.5 max-w-[130px] truncate">parent@family.com</p>
+          </div>
+        </div>
+
+        <!-- Download Source Code ZIP Button -->
+        <a href="/FamilyGuardian_Complete_Source_Code.zip" download="FamilyGuardian_Complete_Source_Code.zip" class="px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 transition flex items-center gap-1.5 shadow-sm" title="Download Complete Android Source Code ZIP">
+          <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
+          <span class="hidden md:inline">Download Source ZIP</span>
+        </a>
+
+        <!-- Logout Button -->
+        <button id="logoutBtn" class="p-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-medium text-slate-300 hover:text-white bg-slate-850 hover:bg-slate-800 border border-slate-700/80 transition flex items-center gap-1.5" title="Sign Out">
+          <i data-lucide="log-out" class="w-4 h-4 text-slate-400"></i>
+          <span class="hidden sm:inline">Sign Out</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Body Container with Sidebar and Content Area -->
+    <div class="flex-1 flex overflow-hidden">
+
+      <!-- ===================================================================== -->
+      <!-- LEFT FIXED SIDEBAR NAVIGATION -->
+      <!-- ===================================================================== -->
+      <aside id="appSidebar" class="fixed inset-y-0 left-0 z-50 w-64 sm:w-72 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 ease-in-out -translate-x-full lg:translate-x-0 lg:static lg:z-auto">
+        
+        <!-- Sidebar Brand Banner & Close button for mobile -->
+        <div class="p-4 border-b border-slate-800/80 flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center text-slate-950 shadow-md shadow-cyan-500/20">
+              <i data-lucide="shield" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-white tracking-wide">FAMILY GUARDIAN</h2>
+              <p class="text-[10px] text-slate-400">Parent Safety Console</p>
+            </div>
+          </div>
+          <button id="sidebarCloseBtn" class="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white bg-slate-800">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <!-- Protected Child Device Info & Multi-Device Selector in Sidebar -->
+        <div class="p-4 pb-2">
+          <div class="p-3 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                <i data-lucide="smartphone" class="w-3 h-3 text-cyan-400"></i>
+                Select Device
+              </span>
+              <span id="sidebarDeviceOnlineDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+            </div>
+            <!-- Multi-device Dropdown Selector -->
+            <select id="deviceSelector" class="w-full bg-slate-900 border border-slate-700 text-white text-xs font-semibold rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-400">
+              <option value="">Loading devices...</option>
+            </select>
+            <div id="sidebarDeviceUuid" class="text-[9px] text-slate-400 font-mono truncate" title="Device UUID">
+              UUID: --
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+              <span class="flex items-center gap-1">
+                <i data-lucide="battery" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <strong id="sidebarBatteryText" class="text-emerald-400">--%</strong>
+              </span>
+              <span id="sidebarStatusText" class="text-[10px] text-slate-400">Offline</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Navigation Menu Items -->
+        <nav class="flex-1 px-3 py-3 space-y-1.5 overflow-y-auto custom-scroll">
+          
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium flex items-center gap-3 transition nav-active" data-view="view-dashboard">
+            <i data-lucide="layout-dashboard" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+            <span>Dashboard</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-location">
+            <i data-lucide="map-pinned" class="w-4 h-4 text-emerald-400 shrink-0"></i>
+            <span>Live Location</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-audio">
+            <i data-lucide="mic" class="w-4 h-4 text-amber-400 shrink-0"></i>
+            <span class="flex-1 text-left">Live Audio</span>
+            <span id="navAudioBadge" class="hidden text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-bold">LIVE</span>
+          </button>
+
+          <!-- NEW: Live Camera Feature Menu Item -->
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-camera">
+            <i data-lucide="video" class="w-4 h-4 text-red-400 shrink-0"></i>
+            <span class="flex-1 text-left">Live Camera</span>
+            <span class="text-[9px] bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 px-1.5 py-0.5 rounded-full font-bold">NEW</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-history">
+            <i data-lucide="route" class="w-4 h-4 text-cyan-400 shrink-0"></i>
+            <span>Location History</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-sos">
+            <i data-lucide="shield-alert" class="w-4 h-4 text-red-400 shrink-0"></i>
+            <span class="flex-1 text-left">SOS Alerts</span>
+            <span id="navSosCount" class="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-1.5 py-0.5 rounded-full font-bold">0</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-sessions">
+            <i data-lucide="history" class="w-4 h-4 text-slate-400 shrink-0"></i>
+            <span>Session History</span>
+          </button>
+
+          <button class="nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition" data-view="view-settings">
+            <i data-lucide="settings" class="w-4 h-4 text-slate-400 shrink-0"></i>
+            <span>Settings & Account</span>
+          </button>
+        </nav>
+
+        <!-- Sidebar Bottom Footer -->
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-500 space-y-2">
+          <div class="flex items-center justify-between text-[11px]">
+            <span>Realtime Engine</span>
+            <span class="text-emerald-400 font-semibold flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Connected
+            </span>
+          </div>
+          <a href="/FamilyGuardian_Complete_Source_Code.zip" download="FamilyGuardian_Complete_Source_Code.zip" class="w-full mt-2 py-2 px-3 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold flex items-center justify-center gap-2 transition">
+            <i data-lucide="file-archive" class="w-4 h-4"></i>
+            <span>Download Source ZIP</span>
+          </a>
+          <p class="text-[10px] text-slate-500 text-center">Family Guardian v2.4 Safe</p>
+        </div>
+      </aside>
+
+      <!-- ===================================================================== -->
+      <!-- MAIN WORKSPACE CONTENT AREA (Changes based on Selected Sidebar Item) -->
+      <!-- ===================================================================== -->
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 custom-scroll space-y-6">
+
+        <!-- GLOBAL SOS ALERT BANNER (Shown across all views if SOS active) -->
+        <div id="sosBanner" class="hidden bg-red-950/90 border-2 border-red-500 rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div class="flex items-center space-x-4">
+            <div class="w-12 h-12 rounded-2xl bg-red-600 text-white flex items-center justify-center sos-pulse shrink-0">
+              <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs uppercase font-extrabold tracking-wider bg-red-600 text-white px-2 py-0.5 rounded-full">EMERGENCY SOS ACTIVE</span>
+                <span id="sosTime" class="text-xs text-red-300">Just now</span>
+              </div>
+              <h3 id="sosTitle" class="text-lg font-bold text-white mt-0.5">Emergency SOS triggered on Child Device!</h3>
+              <p id="sosDetails" class="text-xs text-red-200 mt-1">Coordinates: Lat --, Lng -- • Battery: --%</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto">
+            <button id="sosCenterMapBtn" class="flex-1 sm:flex-none px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl border border-red-500/40 transition flex items-center justify-center gap-1.5">
+              <i data-lucide="map-pin" class="w-4 h-4 text-red-400"></i>
+              <span>View on Map</span>
+            </button>
+            <button id="sosResolveBtn" class="flex-1 sm:flex-none px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-red-600/30 flex items-center justify-center gap-1.5">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>Mark as Resolved</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 1: DASHBOARD (OVERVIEW STATS) -->
+        <!-- =================================================================== -->
+        <div id="view-dashboard" class="dashboard-view space-y-6">
+          
+          <!-- Top Stats Overview Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Stat 1: Protected Device -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">Child Device</p>
+                <h4 id="statDeviceName" class="text-lg font-bold text-white mt-1 truncate max-w-[150px]">Android Device</h4>
+                <div class="mt-1">
+                  <span id="statDeviceStatusBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Offline</span>
+                </div>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <!-- Stat 2: Battery & Network -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">Battery & Power</p>
+                <h4 id="statBattery" class="text-2xl font-bold text-emerald-400 mt-1">--%</h4>
+                <p id="statNetwork" class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                  <i data-lucide="wifi" class="w-3 h-3 text-cyan-400"></i>
+                  <span>Network: Online</span>
+                </p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                <i data-lucide="battery-charging" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <!-- Stat 3: Microphone Stream Status -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">Live Microphone</p>
+                <h4 id="statAudioStatus" class="text-2xl font-bold text-slate-300 mt-1">Idle</h4>
+                <p class="text-[10px] text-amber-400 mt-0.5 font-medium">16kHz Raw PCM</p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                <i data-lucide="mic" class="w-6 h-6"></i>
+              </div>
+            </div>
+
+            <!-- Stat 4: Live Camera Stream Status (NEW) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between shadow-lg">
+              <div>
+                <p class="text-xs text-slate-400 font-medium">Live Camera</p>
+                <h4 id="statCameraStatus" class="text-2xl font-bold text-slate-300 mt-1">Idle</h4>
+                <p class="text-[10px] text-red-400 mt-0.5 font-medium">Realtime Frame Feed</p>
+              </div>
+              <div class="w-12 h-12 rounded-2xl bg-red-500/10 text-red-400 flex items-center justify-center shrink-0">
+                <i data-lucide="video" class="w-6 h-6"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Hub -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Quick Action 1: Live Audio Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="mic" class="w-4 h-4 text-amber-400"></i>
+                    Microphone Listening
+                  </h3>
+                  <span class="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">Background Stream</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Direct one-way live microphone listening into your child's device surroundings.</p>
+              </div>
+              <button class="nav-switch-btn w-full py-2.5 px-4 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs border border-amber-500/40 transition flex items-center justify-center gap-2" data-target-view="view-audio">
+                <i data-lucide="headphones" class="w-4 h-4"></i>
+                <span>Open Audio Console</span>
+              </button>
+            </div>
+
+            <!-- Quick Action 2: Live Camera Card (NEW) -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="video" class="w-4 h-4 text-red-400"></i>
+                    Live Camera Stream
+                  </h3>
+                  <span class="text-[10px] bg-red-500/15 text-red-400 px-2 py-0.5 rounded-full border border-red-500/30">Front / Back</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Remotely view live video frames from the device camera with switchable lens control.</p>
+              </div>
+              <button class="nav-switch-btn w-full py-2.5 px-4 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 font-bold text-xs border border-red-500/40 transition flex items-center justify-center gap-2" data-target-view="view-camera">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+                <span>Open Camera Studio</span>
+              </button>
+            </div>
+
+            <!-- Quick Action 3: Live Map Shortcut Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-400"></i>
+                    Live GPS Telemetry
+                  </h3>
+                  <span class="text-[10px] bg-emerald-500/15 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30">High Accuracy</span>
+                </div>
+                <p class="text-xs text-slate-400 mb-4">Continuous fused GPS coordinates and movement trail tracking.</p>
+              </div>
+              <button class="nav-switch-btn w-full py-2.5 px-4 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 font-bold text-xs border border-emerald-500/40 transition flex items-center justify-center gap-2" data-target-view="view-location">
+                <i data-lucide="map" class="w-4 h-4"></i>
+                <span>Open Full Map</span>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- Account Hardware Details & Status Banner -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+                Account Device & Protection Overview
+              </h3>
+              <span id="deviceHeartbeatBadge" class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-mono">Synced</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 block text-[10px]">Device Name</span>
+                <span id="targetChildName" class="font-bold text-white block mt-0.5 truncate">My Android Device</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 block text-[10px]">Model & Hardware</span>
+                <span id="targetChildDevice" class="font-bold text-slate-300 block mt-0.5 truncate">Android</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 block text-[10px]">Account Email</span>
+                <span id="deviceEmailText" class="font-bold text-cyan-400 block mt-0.5 truncate">--</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 block text-[10px]">Protection Status</span>
+                <span id="deviceStatusText" class="font-bold text-emerald-400 block mt-0.5">Active</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 2: LIVE LOCATION (MAP + TELEMETRY) -->
+        <!-- =================================================================== -->
+        <div id="view-location" class="dashboard-view hidden space-y-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col min-h-[500px] sm:min-h-[580px] lg:h-[680px]">
+            <!-- Map Header Controls -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="map-pinned" class="w-5 h-5 text-emerald-400"></i>
+                    Live Physical Device Location
+                  </h2>
+                  <span id="mapLiveBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+                    <span>NO FIX</span>
+                  </span>
+                  <span id="mockWarningBadge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                    MOCK GPS
+                  </span>
+                </div>
+                <p id="mapSubtitle" class="text-xs text-slate-400 mt-0.5">Continuous fused GPS stream from phone hardware</p>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button id="refreshLocationBtn" title="Refresh GPS" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-4 h-4 text-cyan-400"></i>
+                  <span>Refresh</span>
+                </button>
+                <button id="recenterMapBtn" title="Center on Device" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-md shadow-emerald-600/20 flex items-center gap-1.5">
+                  <i data-lucide="crosshair" class="w-4 h-4"></i>
+                  <span>Center Device</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Leaflet Map Container -->
+            <div class="flex-1 min-h-[350px] rounded-2xl overflow-hidden border border-slate-800 relative z-10" id="mapContainer"></div>
+
+            <!-- Location Telemetry Pill Bar -->
+            <div id="locationTelemetryBar" class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Coordinates</span>
+                <span id="telemetryCoords" class="font-mono text-slate-200 font-medium truncate block">Acquiring GPS...</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Accuracy & Source</span>
+                <span id="telemetryAccuracy" class="font-mono text-slate-200 font-medium truncate block">--</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Battery Status</span>
+                <span id="telemetryBattery" class="font-mono text-emerald-400 font-medium truncate block">--</span>
+              </div>
+              <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Last Fix Recorded</span>
+                <span id="telemetryTime" class="font-mono text-slate-200 font-medium truncate block">--</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 3: LIVE AUDIO (MICROPHONE STREAM) -->
+        <!-- =================================================================== -->
+        <div id="view-audio" class="dashboard-view hidden space-y-6">
+          <div class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                  <i data-lucide="mic" class="w-5 h-5 text-amber-400"></i>
+                  Live Microphone Check-In
+                </h2>
+                <p class="text-xs text-slate-400 mt-1">Silent remote background listening stream via Supabase Realtime broadcast</p>
+              </div>
+              <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-3 py-1 rounded-full font-bold">16kHz PCM</span>
+            </div>
+
+            <!-- Audio Control Action Buttons -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button id="startListeningBtn" class="py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <i data-lucide="mic" class="w-5 h-5"></i>
+                <span>Start Listening</span>
+              </button>
+              <button id="stopListeningBtn" disabled class="py-3.5 px-4 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm transition shadow-lg shadow-red-600/20 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                <i data-lucide="mic-off" class="w-5 h-5"></i>
+                <span>Stop Listening</span>
+              </button>
+            </div>
+
+            <!-- Active Audio Waveform & Volume Panel -->
+            <div id="activeAudioPanel" class="hidden p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span id="audioSessionDot" class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span id="audioSessionStatusText" class="text-xs font-bold text-emerald-400 uppercase tracking-wider">LISTENING LIVE</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400">Duration:</span>
+                  <span id="audioTimer" class="font-mono text-sm text-white bg-slate-900 px-3 py-1 rounded-lg border border-slate-800 font-bold">00:00</span>
+                </div>
+              </div>
+
+              <!-- Waveform Canvas Visualizer -->
+              <div class="bg-slate-900/90 rounded-xl p-3 border border-slate-800">
+                <canvas id="visualizerCanvas" width="600" height="90" class="w-full h-20 rounded"></canvas>
+              </div>
+
+              <!-- Volume Slider & Audio Output Control -->
+              <div class="flex items-center space-x-3 text-slate-400 pt-2">
+                <i data-lucide="volume-2" class="w-5 h-5 text-cyan-400"></i>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.9" class="w-full accent-cyan-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
+                <span id="volumeValue" class="text-xs font-mono font-bold w-10 text-white">90%</span>
+              </div>
+            </div>
+
+            <!-- Guidance Info -->
+            <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400 space-y-1">
+              <p class="font-bold text-slate-300">Technical Details:</p>
+              <p>• Audio is captured as raw 16-bit uncompressed PCM at 16000Hz mono and transmitted in Realtime broadcast chunks.</p>
+              <p>• Decoded natively using Web Audio API in your browser without cloud storage for complete privacy.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 4: LIVE CAMERA (NEW FEATURE) -->
+        <!-- =================================================================== -->
+        <div id="view-camera" class="dashboard-view hidden space-y-6">
+          <div class="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            
+            <!-- Camera Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i data-lucide="video" class="w-5 h-5 text-red-400"></i>
+                    Live Camera Surveillance Studio
+                  </h2>
+                  <span id="cameraActiveBadge" class="text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full font-bold">IDLE</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Stream live video frames from the device camera over Supabase Realtime broadcast</p>
+              </div>
+
+              <!-- Camera Controls: Start, Stop, Switch -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="startCameraBtn" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs transition shadow-lg shadow-red-600/25 flex items-center gap-2">
+                  <i data-lucide="video" class="w-4 h-4"></i>
+                  <span>Start Camera</span>
+                </button>
+                <button id="stopCameraBtn" disabled class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 disabled:opacity-40 disabled:cursor-not-allowed font-bold text-xs border border-slate-700 transition flex items-center gap-2">
+                  <i data-lucide="video-off" class="w-4 h-4"></i>
+                  <span>Stop Camera</span>
+                </button>
+                <button id="switchCameraBtn" title="Switch between Front and Back camera" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold text-xs border border-slate-700 transition flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                  <span id="cameraSwitchLabel">Flip Lens (Front)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Video Viewport Display -->
+            <div class="relative bg-black rounded-2xl overflow-hidden border border-slate-800 aspect-video flex items-center justify-center group shadow-2xl" id="cameraViewport">
+              
+              <!-- Placeholder when camera is inactive -->
+              <div id="cameraPlaceholder" class="text-center p-8 space-y-4">
+                <div class="w-20 h-20 mx-auto rounded-3xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 group-hover:text-cyan-400 transition">
+                  <i data-lucide="camera" class="w-10 h-10"></i>
+                </div>
+                <div>
+                  <h4 class="text-sm font-bold text-slate-300">Camera Feed Inactive</h4>
+                  <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Click "Start Camera" above to command the child device to start streaming live camera frames.</p>
+                </div>
+              </div>
+
+              <!-- Connecting Loader -->
+              <div id="cameraConnectingLoader" class="hidden text-center p-8 space-y-3 z-10">
+                <div class="w-12 h-12 mx-auto border-3 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                <h4 class="text-sm font-bold text-cyan-400">Connecting to Device Camera...</h4>
+                <p class="text-xs text-slate-400">Broadcasting start command via Realtime channel</p>
+              </div>
+
+              <!-- Live Image Frame Streamer -->
+              <img id="cameraFrameImg" alt="Live Camera Feed" class="hidden w-full h-full object-contain select-none" />
+
+              <!-- Overlay HUD Badges (Visible when streaming) -->
+              <div id="cameraHudOverlay" class="hidden absolute inset-0 pointer-events-none p-4 flex flex-col justify-between">
+                <!-- Top HUD Bar -->
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-red-500/40">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+                    <span class="text-xs font-black text-red-500 tracking-wider">LIVE FEED</span>
+                    <span id="cameraHudTimer" class="font-mono text-xs text-white font-bold ml-1">00:00</span>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <span id="cameraFpsBadge" class="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-mono text-cyan-400 border border-slate-700">0 FPS</span>
+                    <span id="cameraLensBadge" class="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold text-emerald-400 border border-slate-700 uppercase">FRONT LENS</span>
+                  </div>
+                </div>
+
+                <!-- Bottom HUD Bar -->
+                <div class="flex items-center justify-between pointer-events-auto">
+                  <span id="cameraFramesCounter" class="bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono text-slate-300">Frames: 0</span>
+                  
+                  <div class="flex items-center gap-2">
+                    <button id="captureSnapshotBtn" class="px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-white text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition" title="Save Snapshot">
+                      <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
+                      <span>Snapshot</span>
+                    </button>
+                    <button id="toggleFullscreenBtn" class="p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 text-white text-xs border border-slate-700 transition" title="Fullscreen">
+                      <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Camera Stream Diagnostics Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Stream Status</span>
+                <span id="diagCameraStatus" class="font-bold text-slate-300 mt-0.5 block">Idle</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Active Camera</span>
+                <span id="diagCameraLens" class="font-bold text-cyan-400 mt-0.5 block">Back (Environment)</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Received Frames</span>
+                <span id="diagCameraFrames" class="font-bold text-emerald-400 mt-0.5 block">0</span>
+              </div>
+              <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <span class="text-slate-500 text-[10px] block">Session ID</span>
+                <span id="diagCameraSessionId" class="font-mono text-slate-400 text-[10px] mt-0.5 block truncate">None</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 5: LOCATION HISTORY & REPLAY -->
+        <!-- =================================================================== -->
+        <div id="view-history" class="dashboard-view hidden space-y-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div>
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="route" class="w-5 h-5 text-cyan-400"></i>
+                  Child Location History & Movement Trail
+                </h2>
+                <p class="text-xs text-slate-400">Recorded GPS breadcrumbs, visit clustering, and movement trail replay</p>
+              </div>
+
+              <!-- Date Range Filters -->
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <button class="history-filter-btn px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-semibold transition" data-range="today">Today</button>
+                <button class="history-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-medium transition" data-range="yesterday">Yesterday</button>
+                <button class="history-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-medium transition" data-range="7days">Last 7 Days</button>
+                <button class="history-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-medium transition" data-range="30days">Last 30 Days</button>
+                
+                <div class="flex items-center gap-1.5 bg-slate-850 border border-slate-700 rounded-lg px-2 py-1">
+                  <input type="date" id="historyStartDate" class="bg-transparent text-slate-300 text-xs focus:outline-none" />
+                  <span class="text-slate-500 text-[10px]">to</span>
+                  <input type="date" id="historyEndDate" class="bg-transparent text-slate-300 text-xs focus:outline-none" />
+                  <button id="applyCustomDateBtn" class="px-2 py-0.5 rounded bg-cyan-500 text-slate-950 font-bold text-[10px] hover:bg-cyan-400 transition">Filter</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- History View Switcher Tabs -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+              <div class="flex space-x-2 text-xs">
+                <button id="tabTrailMap" class="px-3.5 py-1.5 rounded-lg font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-1.5 transition">
+                  <i data-lucide="map" class="w-3.5 h-3.5"></i>
+                  <span>Movement Trail & Replay</span>
+                </button>
+                <button id="tabVisits" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition">
+                  <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                  <span>Visit History (<span id="visitsCountBadge">0</span>)</span>
+                </button>
+                <button id="tabRawTimeline" class="px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition">
+                  <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i>
+                  <span>Raw GPS Timeline (<span id="rawCountBadge">0</span>)</span>
+                </button>
+              </div>
+
+              <div id="historyStatsBadge" class="flex items-center gap-3 text-xs text-slate-400">
+                <span>Recorded Points: <strong id="totalPointsCount" class="text-white">0</strong></span>
+                <span>•</span>
+                <span>Distance: <strong id="totalDistanceCovered" class="text-white">0.0 km</strong></span>
+              </div>
+            </div>
+
+            <!-- VIEW 1: Movement Trail & Interactive Animated Replay -->
+            <div id="viewTrailMap" class="space-y-3">
+              <!-- Replay Controller Bar -->
+              <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs">
+                <div class="flex items-center gap-2">
+                  <button id="replayPlayBtn" class="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold flex items-center gap-1.5 transition shadow-lg shadow-emerald-500/20">
+                    <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+                    <span id="replayPlayText">Play Replay</span>
+                  </button>
+                  <button id="replayResetBtn" title="Reset Replay" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <div class="flex items-center gap-1 ml-2">
+                    <span class="text-slate-500 text-[11px]">Speed:</span>
+                    <button class="replay-speed-btn px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono font-bold text-[10px]" data-speed="1">1x</button>
+                    <button class="replay-speed-btn px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]" data-speed="2">2x</button>
+                    <button class="replay-speed-btn px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]" data-speed="5">5x</button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                  <span id="replayCurrentTime" class="text-slate-300 font-mono text-xs font-semibold">--:--:--</span>
+                  <input type="range" id="replayProgress" min="0" max="100" value="0" class="w-full sm:w-48 accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer" />
+                  <span id="replayStepCounter" class="text-slate-400 font-mono text-xs">0 / 0</span>
+                </div>
+              </div>
+
+              <!-- History Leaflet Map -->
+              <div class="h-[350px] sm:h-[450px] lg:h-[500px] rounded-2xl overflow-hidden border border-slate-800 relative z-10" id="historyMapContainer"></div>
+            </div>
+
+            <!-- VIEW 2: Visit History (Grouped Sessions) -->
+            <div id="viewVisits" class="hidden space-y-2">
+              <div id="visitsListContainer" class="space-y-2 max-h-[500px] overflow-y-auto custom-scroll pr-1 text-xs">
+                <div class="text-center py-8 text-slate-500">No visits recorded for the selected period</div>
+              </div>
+            </div>
+
+            <!-- VIEW 3: Raw GPS Events Timeline -->
+            <div id="viewRawTimeline" class="hidden space-y-2">
+              <div id="rawTimelineContainer" class="space-y-2 max-h-[500px] overflow-y-auto custom-scroll pr-1 text-xs">
+                <div class="text-center py-8 text-slate-500">No GPS points recorded for the selected period</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 6: SOS ALERTS -->
+        <!-- =================================================================== -->
+        <div id="view-sos" class="dashboard-view hidden space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="shield-alert" class="w-5 h-5 text-red-500"></i>
+                  Emergency SOS Alert Logs
+                </h2>
+                <p class="text-xs text-slate-400">All emergency SOS notifications triggered on the child device</p>
+              </div>
+              <button id="refreshSosBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div id="sosAlertsList" class="space-y-3 max-h-[550px] overflow-y-auto custom-scroll pr-1 text-xs">
+              <div class="text-center py-8 text-slate-500">No SOS alerts recorded</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 7: SESSION HISTORY -->
+        <!-- =================================================================== -->
+        <div id="view-sessions" class="dashboard-view hidden space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div>
+                <h2 class="text-base font-bold text-white flex items-center gap-2">
+                  <i data-lucide="history" class="w-5 h-5 text-cyan-400"></i>
+                  Consent & Remote Check-In Session History
+                </h2>
+                <p class="text-xs text-slate-400">Auditable log of all audio and camera listening check-ins</p>
+              </div>
+              <button id="refreshSessionsBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold border border-slate-700 transition flex items-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Refresh</span>
+              </button>
+            </div>
+
+            <div id="sessionHistoryList" class="space-y-2.5 max-h-[550px] overflow-y-auto custom-scroll pr-1 text-xs">
+              <div class="text-center py-8 text-slate-500">No session history yet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 8: SETTINGS & ACCOUNT -->
+        <!-- =================================================================== -->
+        <div id="view-settings" class="dashboard-view hidden space-y-6">
+          <div class="max-w-3xl mx-auto space-y-6">
+            
+            <!-- Parent Account Profile -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="user-check" class="w-4 h-4 text-cyan-400"></i>
+                Parent Profile & Authentication
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                  <span class="text-slate-500 block text-[10px]">Account Name</span>
+                  <span id="settingsAccountName" class="font-bold text-white block mt-0.5">Parent Admin</span>
+                </div>
+                <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+                  <span class="text-slate-500 block text-[10px]">Email Address</span>
+                  <span id="settingsAccountEmail" class="font-bold text-cyan-400 block mt-0.5">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Supabase Realtime Architecture -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+                Realtime Channels & Cloud Connectivity
+              </h3>
+              <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span class="font-mono text-slate-300">Channel: parent_${uid}</span>
+                  <span class="text-emerald-400 font-bold">Subscribed</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span class="font-mono text-slate-300">Channel: user_${uid}</span>
+                  <span class="text-emerald-400 font-bold">Subscribed</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+                  <span class="font-mono text-slate-300">Channel: child_${uid}</span>
+                  <span class="text-emerald-400 font-bold">Subscribed</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logout Section -->
+            <div class="p-6 bg-red-950/20 border border-red-500/30 rounded-3xl flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-bold text-white">Sign Out of Parent Dashboard</h4>
+                <p class="text-xs text-slate-400 mt-0.5">Safely end your session on this browser.</p>
+              </div>
+              <button id="settingsLogoutBtn" class="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition">
+                Sign Out
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Audio Element for emergency siren tone generator -->
+  <audio id="audioStreamElement" autoplay playsinline class="hidden"></audio>
+
+  <!-- ========================================================================= -->
+  <!-- APPLICATION SCRIPT LOGIC -->
+  <!-- ========================================================================= -->
+  <script>
+    // -------------------------------------------------------------------------
+    // SUPABASE CONFIGURATION
+    // -------------------------------------------------------------------------
+    const SUPABASE_URL = "https://wsjtfgxppqohjjlelrlj.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_M0ES_L1FbSsjSNXFjF50Yg_PIHaCMM1";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Application State
+    let currentUser = null;
+    let currentProfile = null;
+    let currentDevice = null;
+    let currentDeviceStatus = null;
+    let activeAudioSession = null;
+    let sessionTimerInterval = null;
+    let sessionSecondsElapsed = 0;
+
+    // Live Camera State (NEW)
+    let activeCameraSession = null;
+    let currentCameraType = 'front'; // 'front' (default) or 'back'
+    let cameraTimerInterval = null;
+    let cameraSecondsElapsed = 0;
+    let cameraFramesReceived = 0;
+    let cameraLastFpsCalcTime = Date.now();
+    let cameraFpsFrameCount = 0;
+    let cameraCurrentFps = 0;
+
+    // Leaflet Maps State
+    let leafletMap = null;
+    let childMarker = null;
+    let accuracyCircle = null;
+    let historyLeafletMap = null;
+    let historyPolyline = null;
+    let historyStartMarker = null;
+    let historyEndMarker = null;
+    let historyPoints = [];
+    let currentHistoryRange = 'today';
+
+    // Realtime Channels
+    let realtimeChannel = null;
+    let userRealtimeChannel = null;
+    let childRealtimeChannel = null;
+
+    // Web Audio API for audio stream decoding & visualization
+    let audioCtx = null;
+    let audioGainNode = null;
+    let audioAnalyser = null;
+    let visualizerAnimationId = null;
+    let sirenOscillator = null;
+
+    // Replay State
+    let replayInterval = null;
+    let replayIndex = 0;
+    let replayMarker = null;
+    let replaySpeed = 1;
+
+    let isSignUpMode = false;
+
+    // -------------------------------------------------------------------------
+    // INITIALIZATION
+    // -------------------------------------------------------------------------
+    document.addEventListener('DOMContentLoaded', async () => {
+      lucide.createIcons();
+      initLeafletMap();
+      checkSession();
+      setupEventListeners();
+      setupSidebarNavigation();
+      setupCameraFeatures();
+    });
+
+    // -------------------------------------------------------------------------
+    // SIDEBAR & VIEW NAVIGATION CONTROLLER
+    // -------------------------------------------------------------------------
+    function setupSidebarNavigation() {
+      const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+      const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+      const appSidebar = document.getElementById('appSidebar');
+      const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+
+      const openSidebar = () => {
+        appSidebar.classList.remove('-translate-x-full');
+        sidebarBackdrop.classList.remove('hidden');
+      };
+
+      const closeSidebar = () => {
+        appSidebar.classList.add('-translate-x-full');
+        sidebarBackdrop.classList.add('hidden');
+      };
+
+      sidebarToggleBtn?.addEventListener('click', openSidebar);
+      sidebarCloseBtn?.addEventListener('click', closeSidebar);
+      sidebarBackdrop?.addEventListener('click', closeSidebar);
+
+      // Nav item clicks
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const targetViewId = e.currentTarget.dataset.view;
+          if (targetViewId) {
+            switchView(targetViewId);
+            if (window.innerWidth < 1024) {
+              closeSidebar();
+            }
+          }
+        });
+      });
+
+      // Quick Switch Buttons in Dashboard
+      document.querySelectorAll('.nav-switch-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget.dataset.targetView;
+          if (target) {
+            switchView(target);
+          }
+        });
+      });
+
+      // Header pills click shortcuts
+      document.getElementById('headerAudioPill')?.addEventListener('click', () => switchView('view-audio'));
+      document.getElementById('headerCameraPill')?.addEventListener('click', () => switchView('view-camera'));
+    }
+
+    function switchView(targetViewId) {
+      // Hide all views
+      document.querySelectorAll('.dashboard-view').forEach(view => {
+        view.classList.add('hidden');
+      });
+
+      // Show target view
+      const targetElement = document.getElementById(targetViewId);
+      if (targetElement) {
+        targetElement.classList.remove('hidden');
+      }
+
+      // Update Sidebar Nav active style
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        if (btn.dataset.view === targetViewId) {
+          btn.className = "nav-item w-full px-3 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 transition nav-active";
+        } else {
+          btn.className = "nav-item w-full px-3 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850 flex items-center gap-3 transition";
+        }
+      });
+
+      // Update Header Title text
+      const titles = {
+        'view-dashboard': 'Dashboard Overview',
+        'view-location': 'Live Location & GPS',
+        'view-audio': 'Live Microphone Stream',
+        'view-camera': 'Live Camera Surveillance',
+        'view-history': 'Location History & Trail',
+        'view-sos': 'Emergency SOS Alerts',
+        'view-sessions': 'Remote Session Logs',
+        'view-settings': 'Settings & Account'
+      };
+      const titleElem = document.getElementById('currentPageTitle');
+      if (titleElem && titles[targetViewId]) {
+        titleElem.innerText = titles[targetViewId];
+      }
+
+      // Re-invalidate map sizes if switching to map views
+      if (targetViewId === 'view-location') {
+        setTimeout(() => {
+          if (leafletMap) leafletMap.invalidateSize();
+        }, 150);
+      } else if (targetViewId === 'view-history') {
+        setTimeout(() => {
+          if (historyLeafletMap) historyLeafletMap.invalidateSize();
+        }, 150);
+      }
+
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // AUTHENTICATION HANDLERS
+    // -------------------------------------------------------------------------
+    async function checkSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session && session.user) {
+        currentUser = session.user;
+        await loadParentProfile();
+        showDashboard();
+      } else {
+        showAuth();
+      }
+    }
+
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+    const authPasswordInput = document.getElementById('authPassword');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authSubmitText = document.getElementById('authSubmitText');
+    const authForm = document.getElementById('authForm');
+    const authAlert = document.getElementById('authAlert');
+    const tabSignIn = document.getElementById('tabSignIn');
+    const tabSignUp = document.getElementById('tabSignUp');
+    const fullNameGroup = document.getElementById('fullNameGroup');
+    const authTitle = document.getElementById('authTitle');
+
+    if (togglePasswordBtn) {
+      togglePasswordBtn.addEventListener('click', () => {
+        const isPassword = authPasswordInput.type === 'password';
+        authPasswordInput.type = isPassword ? 'text' : 'password';
+        togglePasswordIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        lucide.createIcons();
+      });
+    }
+
+    document.getElementById('fillUserAccountBtn')?.addEventListener('click', () => {
+      document.getElementById('authEmail').value = 'ratansunar52@gmail.com';
+      document.getElementById('authPassword').value = 'guardian123';
+      document.getElementById('authName').value = 'Ratan Sunar';
+    });
+
+    document.getElementById('fillDemoAccountBtn')?.addEventListener('click', () => {
+      document.getElementById('authEmail').value = 'parent@family.com';
+      document.getElementById('authPassword').value = 'guardian123';
+      document.getElementById('authName').value = 'Parent Admin';
+    });
+
+    tabSignIn.addEventListener('click', () => {
+      isSignUpMode = false;
+      tabSignIn.className = "flex-1 py-2.5 font-semibold text-cyan-400 border-b-2 border-cyan-400 text-center transition";
+      tabSignUp.className = "flex-1 py-2.5 font-medium text-slate-400 hover:text-slate-200 text-center transition";
+      fullNameGroup.classList.add('hidden');
+      authTitle.innerText = "Parent Portal Login";
+      authSubmitText.innerText = "Sign In to Dashboard";
+      authAlert.classList.add('hidden');
+    });
+
+    tabSignUp.addEventListener('click', () => {
+      isSignUpMode = true;
+      tabSignUp.className = "flex-1 py-2.5 font-semibold text-cyan-400 border-b-2 border-cyan-400 text-center transition";
+      tabSignIn.className = "flex-1 py-2.5 font-medium text-slate-400 hover:text-slate-200 text-center transition";
+      fullNameGroup.classList.remove('hidden');
+      authTitle.innerText = "Register Parent Account";
+      authSubmitText.innerText = "Create Parent Account";
+      authAlert.classList.add('hidden');
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      const fullName = document.getElementById('authName').value.trim();
+
+      if (!email || !password) {
+        showAuthAlert('Please enter both email and password.', 'error');
+        return;
+      }
+      if (password.length < 6) {
+        showAuthAlert('Password must be at least 6 characters long.', 'error');
+        return;
+      }
+
+      setAuthLoading(true);
+
+      try {
+        if (isSignUpMode) {
+          const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
+            options: {
+              data: { role: 'parent', full_name: fullName || 'Parent Admin' }
+            }
+          });
+
+          if (error) {
+            if (error.message.toLowerCase().includes('already registered')) {
+              showAuthAlert(`Account already exists for <code>${email}</code>. Switching to Sign In...`, 'info');
+              tabSignIn.click();
+              document.getElementById('authEmail').value = email;
+              document.getElementById('authPassword').value = password;
+              setAuthLoading(false);
+              return;
+            }
+            throw error;
+          }
+
+          if (data?.user?.identities && data.user.identities.length === 0) {
+            tabSignIn.click();
+            document.getElementById('authEmail').value = email;
+            document.getElementById('authPassword').value = password;
+            const { data: signData, error: signError } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (signError) throw signError;
+            currentUser = signData.user;
+            await ensureParentProfile(currentUser, email, fullName);
+            await loadParentProfile();
+            showDashboard();
+            setAuthLoading(false);
+            return;
+          }
+
+          showAuthAlert(`✅ Account created! Signing you into your dashboard...`, 'success');
+          const { data: logData, error: logErr } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (!logErr && logData?.user) {
+            currentUser = logData.user;
+            await ensureParentProfile(currentUser, email, fullName);
+            await loadParentProfile();
+            showDashboard();
+          }
+        } else {
+          const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          currentUser = data.user;
+          await ensureParentProfile(currentUser, email, fullName);
+          await loadParentProfile();
+          showDashboard();
+        }
+      } catch (err) {
+        showAuthAlert(err.message || 'Authentication failed', 'error');
+      } finally {
+        setAuthLoading(false);
+      }
+    });
+
+    function setAuthLoading(loading) {
+      if (loading) {
+        authSubmitBtn.disabled = true;
+        authSubmitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        authSubmitText.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> Authenticating...';
+      } else {
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        authSubmitText.innerText = isSignUpMode ? "Create Parent Account" : "Sign In to Dashboard";
+      }
+    }
+
+    async function ensureParentProfile(user, email, name) {
+      if (!user) return;
+      try {
+        await supabaseClient.from('profiles').upsert({
+          id: user.id,
+          email: email || user.email,
+          role: 'parent',
+          full_name: name || user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'Parent Admin')
+        }, { onConflict: 'id' });
+      } catch (e) {
+        console.warn("ensureParentProfile upsert skipped", e);
+      }
+    }
+
+    async function handleLogout() {
+      try {
+        await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.warn("SignOut error:", err);
+      }
+      currentUser = null;
+      currentProfile = null;
+      currentDevice = null;
+      currentDeviceStatus = null;
+      resetAudioUI();
+      resetCameraUI();
+      stopSiren();
+      stopReplay();
+      if (realtimeChannel) { supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
+      if (userRealtimeChannel) { supabaseClient.removeChannel(userRealtimeChannel); userRealtimeChannel = null; }
+      if (childRealtimeChannel) { supabaseClient.removeChannel(childRealtimeChannel); childRealtimeChannel = null; }
+      showAuth();
+    }
+
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+    document.getElementById('settingsLogoutBtn')?.addEventListener('click', handleLogout);
+
+    function showAuthAlert(htmlMsg, type) {
+      authAlert.classList.remove('hidden', 'bg-red-950/80', 'text-red-200', 'border-red-800', 'bg-emerald-950/80', 'text-emerald-200', 'border-emerald-800', 'bg-slate-800/90', 'text-slate-200', 'border-cyan-800');
+      if (type === 'error') {
+        authAlert.classList.add('bg-red-950/80', 'text-red-200', 'border', 'border-red-800');
+      } else if (type === 'success') {
+        authAlert.classList.add('bg-emerald-950/80', 'text-emerald-200', 'border', 'border-emerald-800');
+      } else {
+        authAlert.classList.add('bg-slate-800/90', 'text-slate-200', 'border', 'border-cyan-800');
+      }
+      authAlert.innerHTML = htmlMsg;
+      lucide.createIcons();
+    }
+
+    async function loadParentProfile() {
+      if (!currentUser) return;
+      try {
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .maybeSingle();
+        
+        if (profile) {
+          currentProfile = profile;
+        } else {
+          const fallback = {
+            id: currentUser.id,
+            email: currentUser.email,
+            role: 'parent',
+            full_name: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0] || 'Parent Admin'
+          };
+          currentProfile = fallback;
+          await supabaseClient.from('profiles').upsert(fallback, { onConflict: 'id' });
+        }
+      } catch (e) {
+        currentProfile = { full_name: 'Parent Admin', email: currentUser.email, role: 'parent' };
+      }
+      const pName = currentProfile.full_name || 'Parent Admin';
+      document.getElementById('parentUserName').innerText = pName;
+      document.getElementById('parentUserEmail').innerText = currentUser.email;
+      const sName = document.getElementById('settingsAccountName');
+      const sEmail = document.getElementById('settingsAccountEmail');
+      if (sName) sName.innerText = pName;
+      if (sEmail) sEmail.innerText = currentUser.email;
+    }
+
+    function showDashboard() {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      switchView('view-dashboard');
+      lucide.createIcons();
+
+      initLeafletMap();
+      loadUserDevice(true);
+      subscribeToRealtime();
+    }
+
+    function showAuth() {
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('authSection').classList.remove('hidden');
+      document.getElementById('authAlert').classList.add('hidden');
+      resetAudioUI();
+      resetCameraUI();
+      stopSiren();
+      stopReplay();
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // SINGLE-ACCOUNT PROTECTED DEVICE MANAGEMENT
+    // -------------------------------------------------------------------------
+    let registeredDevices = [];
+
+    async function loadUserDevice(fullSync = false) {
+      if (!currentUser) return;
+
+      const deviceEmail = document.getElementById('deviceEmailText');
+      if (deviceEmail) deviceEmail.innerText = currentUser.email;
+
+      try {
+        const { data: devices, error: devErr } = await supabaseClient
+          .from('child_devices')
+          .select('*')
+          .eq('child_id', currentUser.id)
+          .order('last_seen', { ascending: false });
+
+        if (devErr) {
+          console.error("child_devices fetch error:", devErr);
+        }
+
+        registeredDevices = devices || [];
+        const selector = document.getElementById('deviceSelector');
+        const uuidElem = document.getElementById('sidebarDeviceUuid');
+
+        if (registeredDevices.length === 0) {
+          currentDevice = null;
+          if (selector) {
+            selector.innerHTML = `<option value="">No Devices Registered</option>`;
+            selector.disabled = true;
+          }
+          if (uuidElem) uuidElem.innerText = "No device registered";
+          document.getElementById('statDeviceName').innerText = "No Device";
+          document.getElementById('targetChildName').innerText = "No Device Registered";
+          document.getElementById('targetChildDevice').innerText = "Log in on Child App with this account to register";
+          const badge = document.getElementById('statDeviceStatusBadge');
+          if (badge) {
+            badge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+            badge.innerText = "NO DEVICE";
+          }
+        } else {
+          // Select previous device or first device
+          const prevId = currentDevice ? currentDevice.device_id : (selector ? selector.value : null);
+          let matched = registeredDevices.find(d => d.device_id === prevId);
+          if (!matched) matched = registeredDevices[0];
+          currentDevice = matched;
+
+          if (selector) {
+            selector.disabled = false;
+            selector.innerHTML = registeredDevices.map(d => {
+              const name = d.device_name || `${d.model || 'Android Device'}`;
+              const shortUid = d.device_id ? d.device_id.substring(0, 8) + '...' : '';
+              return `<option value="${d.device_id}" ${d.device_id === currentDevice.device_id ? 'selected' : ''}>${name} (${shortUid})</option>`;
+            }).join('');
+          }
+
+          const devName = currentDevice.device_name || `${currentDevice.model || 'Android Device'}`;
+          document.getElementById('statDeviceName').innerText = devName;
+          document.getElementById('targetChildName').innerText = devName;
+          document.getElementById('targetChildDevice').innerText = `Model: ${currentDevice.model || 'Android'} (${currentDevice.os_version || 'OS'})`;
+          if (uuidElem) uuidElem.innerText = `UUID: ${currentDevice.device_id}`;
+        }
+      } catch (err) {
+        console.warn("Device load warning:", err);
+      }
+
+      try {
+        let query = supabaseClient
+          .from('device_status')
+          .select('*')
+          .eq('child_id', currentUser.id);
+
+        if (currentDevice && currentDevice.device_id) {
+          query = query.or(`device_id.eq.${currentDevice.device_id},device_id.is.null`);
+        }
+
+        const { data: statusList, error: stErr } = await query
+          .order('last_heartbeat', { ascending: false })
+          .limit(1);
+
+        if (stErr) console.warn("Device status fetch error:", stErr);
+
+        const status = statusList && statusList.length > 0 ? statusList[0] : null;
+        if (status) {
+          currentDeviceStatus = status;
+          updateDeviceStatusUI(status);
+        } else if (!currentDevice) {
+          updateDeviceStatusUI({ is_online: false, battery_level: 0, network_type: 'NONE' });
+        }
+      } catch (err) {
+        console.warn("Device status warning:", err);
+      }
+
+      if (fullSync) {
+        await Promise.all([
+          loadChildLocation(),
+          loadChildHistory('today'),
+          loadSosAlerts(),
+          loadSessionHistory()
+        ]);
+      }
+    }
+
+    document.getElementById('deviceSelector')?.addEventListener('change', (e) => {
+      const selectedId = e.target.value;
+      const found = registeredDevices.find(d => d.device_id === selectedId);
+      if (found) {
+        currentDevice = found;
+        loadUserDevice(true);
+      }
+    });
+
+    function updateDeviceStatusUI(st) {
+      if (!st) return;
+      const isOnline = st.is_online === true;
+      
+      const badge = document.getElementById('statDeviceStatusBadge');
+      const sideDot = document.getElementById('sidebarDeviceOnlineDot');
+      const sideTxt = document.getElementById('sidebarStatusText');
+      const headerPill = document.getElementById('headerLiveStatusPill');
+
+      if (isOnline) {
+        if (badge) {
+          badge.className = "text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+          badge.innerText = "ONLINE";
+        }
+        if (sideDot) sideDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+        if (sideTxt) sideTxt.innerText = "Online & Protected";
+        if (headerPill) {
+          headerPill.className = "text-[10px] bg-emerald-500/10 text-emerald-400 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/20";
+          headerPill.innerText = "Online";
+        }
+      } else {
+        if (badge) {
+          badge.className = "text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700";
+          badge.innerText = "OFFLINE";
+        }
+        if (sideDot) sideDot.className = "w-2 h-2 rounded-full bg-slate-500";
+        if (sideTxt) sideTxt.innerText = "Offline";
+        if (headerPill) {
+          headerPill.className = "text-[10px] bg-slate-800 text-slate-400 font-semibold px-2 py-0.5 rounded-full border border-slate-700";
+          headerPill.innerText = "Offline";
+        }
+      }
+
+      // Battery
+      if (st.battery_level !== undefined && st.battery_level !== null) {
+        const batText = `${st.battery_level}%${st.is_charging ? ' ⚡' : ''}`;
+        document.getElementById('statBattery').innerText = batText;
+        document.getElementById('sidebarBatteryText').innerText = batText;
+      }
+
+      // Network
+      if (st.network_type) {
+        document.getElementById('statNetwork').innerHTML = `<i data-lucide="wifi" class="w-3 h-3 text-cyan-400"></i><span>Net: ${st.network_type}</span>`;
+      }
+
+      // Heartbeat badge
+      if (st.last_heartbeat) {
+        const timeAgo = formatTimeAgo(new Date(st.last_heartbeat));
+        const hb = document.getElementById('deviceHeartbeatBadge');
+        if (hb) hb.innerText = timeAgo;
+      }
+
+      lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------------------
+    // LEAFLET LIVE LOCATION ENGINE
+    // -------------------------------------------------------------------------
+    function initLeafletMap() {
+      const container = document.getElementById('mapContainer');
+      if (!container) return;
+
+      if (!leafletMap) {
+        leafletMap = L.map('mapContainer', {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([27.7172, 85.3240], 14);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19
+        }).addTo(leafletMap);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(leafletMap);
+
+        const childIcon = L.divIcon({
+          className: 'custom-child-marker',
+          html: `
+            <div class="relative flex items-center justify-center">
+              <span class="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-cyan-400 opacity-75"></span>
+              <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-500 border-2 border-white shadow-xl flex items-center justify-center text-slate-950 font-black text-xs">
+                📍
+              </div>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        childMarker = L.marker([27.7172, 85.3240], { icon: childIcon }).addTo(leafletMap);
+      }
+
+      // History Leaflet Map
+      const hContainer = document.getElementById('historyMapContainer');
+      if (hContainer && !historyLeafletMap) {
+        historyLeafletMap = L.map('historyMapContainer', {
+          zoomControl: false,
+          attributionControl: false
+        }).setView([27.7172, 85.3240], 14);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19
+        }).addTo(historyLeafletMap);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(historyLeafletMap);
+      }
+    }
+
+    async function loadChildLocation() {
+      if (!currentUser) return;
+      try {
+        const { data: loc } = await supabaseClient
+          .from('location_updates')
+          .select('*')
+          .eq('child_id', currentUser.id)
+          .order('recorded_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (loc) {
+          updateMapLocation(loc.latitude, loc.longitude, loc.accuracy, loc.recorded_at, loc.provider, loc.is_mock);
+        }
+      } catch (err) {
+        console.warn("Child location load error:", err);
+      }
+    }
+
+    function updateMapLocation(lat, lng, accuracy = 10, recordedAt = null, provider = 'fused', isMock = false) {
+      if (!leafletMap || lat === undefined || lng === undefined) return;
+
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      if (isNaN(latNum) || isNaN(lngNum)) return;
+
+      const latLng = [latNum, lngNum];
+
+      if (childMarker) {
+        childMarker.setLatLng(latLng);
+      }
+
+      if (accuracyCircle) {
+        leafletMap.removeLayer(accuracyCircle);
+      }
+      accuracyCircle = L.circle(latLng, {
+        radius: accuracy || 15,
+        color: '#06b6d4',
+        fillColor: '#06b6d4',
+        fillOpacity: 0.12,
+        weight: 1.5
+      }).addTo(leafletMap);
+
+      leafletMap.panTo(latLng);
+
+      // Update telemetry pill bar
+      document.getElementById('telemetryCoords').innerText = `${latNum.toFixed(5)}, ${lngNum.toFixed(5)}`;
+      document.getElementById('telemetryAccuracy').innerText = `±${Math.round(accuracy)}m (${provider || 'GPS'})`;
+      document.getElementById('telemetryTime').innerText = recordedAt ? new Date(recordedAt).toLocaleTimeString() : 'Just now';
+
+      const mapBadge = document.getElementById('mapLiveBadge');
+      if (mapBadge) {
+        mapBadge.className = "text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1.5";
+        mapBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>LIVE GPS FIX</span>`;
+      }
+
+      const mockBadge = document.getElementById('mockWarningBadge');
+      if (mockBadge) {
+        if (isMock) {
+          mockBadge.classList.remove('hidden');
+        } else {
+          mockBadge.classList.add('hidden');
+        }
+      }
+    }
+
+    document.getElementById('recenterMapBtn')?.addEventListener('click', () => {
+      if (childMarker && leafletMap) {
+        leafletMap.setView(childMarker.getLatLng(), 16);
+      }
+    });
+
+    document.getElementById('refreshLocationBtn')?.addEventListener('click', () => {
+      loadChildLocation();
+    });
+
+    // -------------------------------------------------------------------------
+    // REALTIME BROADCAST HELPER
+    // -------------------------------------------------------------------------
+    function broadcastRealtime(event, payload) {
+      const channels = [realtimeChannel, userRealtimeChannel, childRealtimeChannel];
+      channels.forEach(ch => {
+        if (ch) {
+          try {
+            ch.send({
+              type: 'broadcast',
+              event,
+              payload
+            });
+          } catch (err) {
+            console.warn(`Broadcast error on ${event}:`, err);
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // DIRECT LIVE MICROPHONE LISTENING ENGINE
+    // -------------------------------------------------------------------------
+    const startListeningBtn = document.getElementById('startListeningBtn');
+    const stopListeningBtn = document.getElementById('stopListeningBtn');
+    const activeAudioPanel = document.getElementById('activeAudioPanel');
+    const audioSessionStatusText = document.getElementById('audioSessionStatusText');
+    const audioSessionDot = document.getElementById('audioSessionDot');
+    const audioTimer = document.getElementById('audioTimer');
+    const volumeSlider = document.getElementById('volumeSlider');
+    const volumeValue = document.getElementById('volumeValue');
+    const visualizerCanvas = document.getElementById('visualizerCanvas');
+
+    startListeningBtn?.addEventListener('click', async () => {
+      if (!currentUser) return;
+      initAudioContext();
+
+      const targetChildId = currentUser.id;
+      const tempSessionId = 'session_' + Date.now();
+
+      startListeningBtn.disabled = true;
+      stopListeningBtn.disabled = false;
+      showActiveAudioSessionUI('Request sent to Child Device. Waiting for child acceptance...');
+
+      try {
+        let finalSessionId = tempSessionId;
+
+        // 1. Insert session record into database first to get final DB ID with status: 'requested'
+        try {
+          const { data, error } = await supabaseClient
+            .from('audio_sessions')
+            .insert({
+              child_id: targetChildId,
+              parent_id: currentUser.id,
+              requested_by: currentUser.id,
+              device_id: currentDevice ? currentDevice.device_id : null,
+              status: 'requested',
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .maybeSingle();
+
+          if (data && data.id) {
+            finalSessionId = data.id;
+            activeAudioSession = data;
+            activeAudioSession.tempId = tempSessionId;
+          } else {
+            activeAudioSession = { id: tempSessionId, tempId: tempSessionId, child_id: targetChildId, status: 'requested' };
+          }
+        } catch (dbErr) {
+          console.warn('DB audio session insert failed, falling back to temp ID:', dbErr);
+          activeAudioSession = { id: tempSessionId, tempId: tempSessionId, child_id: targetChildId, status: 'requested' };
+        }
+
+        // 2. Broadcast start_audio command using existing channels (action: 'request')
+        const startPayload = {
+          sessionId: finalSessionId,
+          tempId: tempSessionId,
+          childId: targetChildId,
+          parentId: currentUser.id,
+          deviceId: currentDevice ? currentDevice.device_id : null,
+          action: 'request'
+        };
+
+        broadcastRealtime('start_audio', startPayload);
+        broadcastRealtime('request_audio', startPayload);
+
+        const badge = document.getElementById('audioActiveBadge');
+        if (badge) {
+          badge.className = "text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2 py-0.5 rounded-full font-bold animate-pulse";
+          badge.innerText = "WAITING FOR CONSENT";
+        }
+      } catch (err) {
+        console.error('Error starting audio stream:', err);
+        resetAudioUI();
+        alert('Could not start microphone stream: ' + (err.message || 'Connection error'));
+      }
+    });
+
+    stopListeningBtn?.addEventListener('click', async () => {
+      await endAudioSession('parent');
+    });
+
+    async function endAudioSession(reason = 'parent') {
+      if (!currentUser) return;
+      const targetChildId = currentUser.id;
+      const sid = activeAudioSession ? activeAudioSession.id : null;
+      const tempSid = activeAudioSession ? activeAudioSession.tempId : null;
+
+      const stopPayload = {
+        sessionId: sid || 'current',
+        tempId: tempSid,
+        childId: targetChildId,
+        action: 'end',
+        reason
+      };
+
+      // Broadcast stop command using existing persistent channels
+      broadcastRealtime('stop_audio', stopPayload);
+      broadcastRealtime('audio_control', stopPayload);
+
+      if (sid && !sid.startsWith('session_')) {
+        try {
+          await supabaseClient
+            .from('audio_sessions')
+            .update({
+              status: 'ended',
+              ended_at: new Date().toISOString(),
+              terminated_by: reason,
+              duration_seconds: sessionSecondsElapsed
+            })
+            .eq('id', sid);
+        } catch (e) {
+          console.warn('Error ending audio session in database:', e);
+        }
+      }
+
+      resetAudioUI();
+      loadSessionHistory();
+    }
+
+    function showActiveAudioSessionUI(statusText) {
+      activeAudioPanel?.classList.remove('hidden');
+      if (audioSessionStatusText) audioSessionStatusText.innerText = statusText;
+      if (audioSessionDot) audioSessionDot.className = "w-3 h-3 rounded-full bg-amber-400 animate-ping";
+      const statAudio = document.getElementById('statAudioStatus');
+      if (statAudio) {
+        statAudio.innerText = 'Connecting';
+        statAudio.className = 'text-2xl font-bold text-amber-400 mt-1';
+      }
+      sessionSecondsElapsed = 0;
+      if (audioTimer) audioTimer.innerText = '00:00';
+    }
+
+    function startActiveStreamingUI() {
+      activeAudioPanel?.classList.remove('hidden');
+      if (audioSessionStatusText) {
+        audioSessionStatusText.innerText = "LISTENING LIVE";
+        audioSessionStatusText.className = "text-xs font-bold text-emerald-400 uppercase tracking-wider";
+      }
+      if (audioSessionDot) audioSessionDot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+      const statAudio = document.getElementById('statAudioStatus');
+      if (statAudio) {
+        statAudio.innerText = 'Active';
+        statAudio.className = 'text-2xl font-bold text-emerald-400 mt-1';
+      }
+      if (startListeningBtn) startListeningBtn.disabled = true;
+      if (stopListeningBtn) stopListeningBtn.disabled = false;
+
+      // Header Pill & Nav Badge
+      const headerPill = document.getElementById('headerAudioPill');
+      const navBadge = document.getElementById('navAudioBadge');
+      if (headerPill) { headerPill.classList.remove('hidden'); headerPill.classList.add('flex'); }
+      if (navBadge) navBadge.classList.remove('hidden');
+
+      clearInterval(sessionTimerInterval);
+      sessionTimerInterval = setInterval(() => {
+        sessionSecondsElapsed++;
+        const mins = String(Math.floor(sessionSecondsElapsed / 60)).padStart(2, '0');
+        const secs = String(sessionSecondsElapsed % 60).padStart(2, '0');
+        const formatted = `${mins}:${secs}`;
+        if (audioTimer) audioTimer.innerText = formatted;
+        const headerTimer = document.getElementById('headerAudioTimer');
+        if (headerTimer) headerTimer.innerText = formatted;
+      }, 1000);
+
+      startVisualizerAnimation();
+    }
+
+    function resetAudioUI() {
+      clearInterval(sessionTimerInterval);
+      activeAudioSession = null;
+      sessionSecondsElapsed = 0;
+      activeAudioPanel?.classList.add('hidden');
+      if (startListeningBtn) startListeningBtn.disabled = !currentUser;
+      if (stopListeningBtn) stopListeningBtn.disabled = true;
+      const statAudio = document.getElementById('statAudioStatus');
+      if (statAudio) {
+        statAudio.innerText = 'Idle';
+        statAudio.className = 'text-2xl font-bold text-slate-300 mt-1';
+      }
+
+      // Header Pill & Nav Badge
+      const headerPill = document.getElementById('headerAudioPill');
+      const navBadge = document.getElementById('navAudioBadge');
+      if (headerPill) { headerPill.classList.add('hidden'); headerPill.classList.remove('flex'); }
+      if (navBadge) navBadge.classList.add('hidden');
+
+      if (visualizerAnimationId) {
+        cancelAnimationFrame(visualizerAnimationId);
+      }
+      clearVisualizerCanvas();
+      lucide.createIcons();
+    }
+
+    function initAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+
+        audioGainNode = audioCtx.createGain();
+        audioGainNode.gain.value = 0.9;
+
+        audioAnalyser = audioCtx.createAnalyser();
+        audioAnalyser.fftSize = 128;
+
+        audioGainNode.connect(audioAnalyser);
+        audioAnalyser.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    volumeSlider?.addEventListener('input', (e) => {
+      const vol = parseFloat(e.target.value);
+      if (volumeValue) volumeValue.innerText = `${Math.round(vol * 100)}%`;
+      if (audioGainNode) {
+        audioGainNode.gain.value = vol;
+      }
+    });
+
+    function playIncomingPcmChunk(base64Data) {
+      if (!audioCtx) initAudioContext();
+
+      try {
+        const binaryString = atob(base64Data);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const int16View = new Int16Array(bytes.buffer);
+        const float32Array = new Float32Array(int16View.length);
+        for (let i = 0; i < int16View.length; i++) {
+          float32Array[i] = int16View[i] / 32768.0;
+        }
+
+        const audioBuffer = audioCtx.createBuffer(1, float32Array.length, 16000);
+        audioBuffer.copyToChannel(float32Array, 0);
+
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioGainNode);
+        source.start();
+      } catch (e) {
+        console.error('Audio chunk decoding error:', e);
+      }
+    }
+
+    function startVisualizerAnimation() {
+      if (!visualizerCanvas || !audioAnalyser) return;
+      const canvasCtx = visualizerCanvas.getContext('2d');
+      const bufferLength = audioAnalyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      function renderFrame() {
+        visualizerAnimationId = requestAnimationFrame(renderFrame);
+        audioAnalyser.getByteFrequencyData(dataArray);
+
+        canvasCtx.fillStyle = '#020617';
+        canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+
+        const barWidth = (visualizerCanvas.width / bufferLength) * 2.2;
+        let x = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+          const barHeight = (dataArray[i] / 255) * visualizerCanvas.height * 0.9;
+
+          const gradient = canvasCtx.createLinearGradient(0, visualizerCanvas.height, 0, 0);
+          gradient.addColorStop(0, '#10b981');
+          gradient.addColorStop(0.5, '#06b6d4');
+          gradient.addColorStop(1, '#f59e0b');
+
+          canvasCtx.fillStyle = gradient;
+          canvasCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth - 1, barHeight);
+
+          x += barWidth;
+        }
+      }
+
+      renderFrame();
+    }
+
+    function clearVisualizerCanvas() {
+      if (!visualizerCanvas) return;
+      const canvasCtx = visualizerCanvas.getContext('2d');
+      canvasCtx.fillStyle = '#020617';
+      canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+    }
+
+    // -------------------------------------------------------------------------
+    // NEW FEATURE: LIVE CAMERA SURVEILLANCE STUDIO
+    // -------------------------------------------------------------------------
+    function setupCameraFeatures() {
+      const startCameraBtn = document.getElementById('startCameraBtn');
+      const stopCameraBtn = document.getElementById('stopCameraBtn');
+      const switchCameraBtn = document.getElementById('switchCameraBtn');
+      const captureSnapshotBtn = document.getElementById('captureSnapshotBtn');
+      const toggleFullscreenBtn = document.getElementById('toggleFullscreenBtn');
+
+      startCameraBtn?.addEventListener('click', () => startCameraStream(currentCameraType));
+      stopCameraBtn?.addEventListener('click', () => endCameraSession('parent'));
+      switchCameraBtn?.addEventListener('click', switchCameraLens);
+
+      captureSnapshotBtn?.addEventListener('click', () => {
+        const frameImg = document.getElementById('cameraFrameImg');
+        if (frameImg && frameImg.src && !frameImg.classList.contains('hidden')) {
+          const link = document.createElement('a');
+          link.href = frameImg.src;
+          link.download = `guardian_snapshot_${Date.now()}.jpg`;
+          link.click();
+        } else {
+          alert('No active camera frame to capture');
+        }
+      });
+
+      toggleFullscreenBtn?.addEventListener('click', () => {
+        const viewport = document.getElementById('cameraViewport');
+        if (!document.fullscreenElement) {
+          viewport?.requestFullscreen().catch(err => console.warn(err));
+        } else {
+          document.exitFullscreen().catch(err => console.warn(err));
+        }
+      });
+    }
+
+    async function startCameraStream(cameraType = 'back') {
+      if (!currentUser) return;
+
+      const targetChildId = currentUser.id;
+      const tempSessionId = 'cam_' + Date.now();
+
+      const startCameraBtn = document.getElementById('startCameraBtn');
+      const stopCameraBtn = document.getElementById('stopCameraBtn');
+      if (startCameraBtn) startCameraBtn.disabled = true;
+      if (stopCameraBtn) stopCameraBtn.disabled = false;
+
+      showConnectingCameraUI();
+
+      try {
+        let finalSessionId = tempSessionId;
+
+        // 1. Register camera session in database table with status: 'requested'
+        try {
+          const { data, error: camErr } = await supabaseClient
+            .from('camera_sessions')
+            .insert({
+              child_id: targetChildId,
+              parent_id: currentUser.id,
+              requested_by: currentUser.id,
+              device_id: currentDevice ? currentDevice.device_id : null,
+              camera_lens: cameraType,
+              status: 'requested',
+              created_at: new Date().toISOString()
+            })
+            .select()
+            .maybeSingle();
+
+          if (data && data.id) {
+            finalSessionId = data.id;
+            activeCameraSession = data;
+            activeCameraSession.tempId = tempSessionId;
+          } else {
+            activeCameraSession = { id: tempSessionId, tempId: tempSessionId, child_id: targetChildId, status: 'requested', camera: cameraType };
+          }
+        } catch (dbErr) {
+          console.warn('DB camera_sessions insert failed, using temp session:', dbErr);
+          activeCameraSession = { id: tempSessionId, tempId: tempSessionId, child_id: targetChildId, status: 'requested', camera: cameraType };
+        }
+
+        // 2. Broadcast start_camera request command
+        const startPayload = {
+          sessionId: finalSessionId,
+          tempId: tempSessionId,
+          childId: targetChildId,
+          parentId: currentUser.id,
+          deviceId: currentDevice ? currentDevice.device_id : null,
+          action: 'request',
+          camera: cameraType
+        };
+
+        broadcastRealtime('start_camera', startPayload);
+        broadcastRealtime('camera_control', startPayload);
+
+        const badge = document.getElementById('cameraActiveBadge');
+        if (badge) {
+          badge.className = "text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
+          badge.innerText = "WAITING FOR CHILD ACCEPTANCE";
+        }
+        const diagStatus = document.getElementById('diagCameraStatus');
+        if (diagStatus) diagStatus.innerText = 'Request sent to Child Device. Waiting for consent & first frame...';
+      } catch (err) {
+        console.error('Error starting camera stream:', err);
+        resetCameraUI();
+        alert('Could not start camera stream: ' + (err.message || 'Connection error'));
+      }
+    }
+
+    async function endCameraSession(reason = 'parent') {
+      if (!currentUser) return;
+      const targetChildId = currentUser.id;
+      const sid = activeCameraSession ? activeCameraSession.id : null;
+      const tempSid = activeCameraSession ? activeCameraSession.tempId : null;
+
+      const stopPayload = {
+        sessionId: sid || 'current',
+        tempId: tempSid,
+        childId: targetChildId,
+        action: 'end',
+        reason
+      };
+
+      broadcastRealtime('stop_camera', stopPayload);
+      broadcastRealtime('camera_control', stopPayload);
+
+      if (sid && !sid.startsWith('cam_')) {
+        try {
+          await supabaseClient
+            .from('camera_sessions')
+            .update({
+              status: 'ended',
+              ended_at: new Date().toISOString(),
+              terminated_by: reason,
+              duration_seconds: cameraSecondsElapsed,
+              frames_received: cameraFramesReceived
+            })
+            .eq('id', sid);
+        } catch (e) {
+          console.warn('Error ending camera session in DB:', e);
+        }
+      }
+
+      resetCameraUI();
+      loadSessionHistory();
+    }
+
+    function switchCameraLens() {
+      currentCameraType = currentCameraType === 'back' ? 'front' : 'back';
+      const label = document.getElementById('cameraSwitchLabel');
+      if (label) label.innerText = `Flip Lens (${currentCameraType === 'back' ? 'Back' : 'Front'})`;
+
+      const diagLens = document.getElementById('diagCameraLens');
+      if (diagLens) diagLens.innerText = currentCameraType === 'back' ? 'Back (Environment)' : 'Front (Selfie)';
+
+      const hudLens = document.getElementById('cameraLensBadge');
+      if (hudLens) hudLens.innerText = `${currentCameraType.toUpperCase()} LENS`;
+
+      // If active, broadcast camera_control switch command
+      if (activeCameraSession) {
+        const switchPayload = {
+          sessionId: activeCameraSession.id,
+          childId: currentUser.id,
+          parentId: currentUser.id,
+          action: 'switch',
+          camera: currentCameraType
+        };
+        broadcastRealtime('camera_control', switchPayload);
+        broadcastRealtime('start_camera', switchPayload);
+      }
+    }
+
+    function showConnectingCameraUI() {
+      document.getElementById('cameraPlaceholder')?.classList.add('hidden');
+      document.getElementById('cameraConnectingLoader')?.classList.remove('hidden');
+      document.getElementById('cameraFrameImg')?.classList.add('hidden');
+      document.getElementById('cameraHudOverlay')?.classList.add('hidden');
+
+      const badge = document.getElementById('cameraActiveBadge');
+      if (badge) {
+        badge.className = "text-[10px] bg-amber-500/20 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded-full font-bold";
+        badge.innerText = "CONNECTING...";
+      }
+      const statCam = document.getElementById('statCameraStatus');
+      if (statCam) {
+        statCam.innerText = 'Connecting';
+        statCam.className = 'text-2xl font-bold text-amber-400 mt-1';
+      }
+      const diagStatus = document.getElementById('diagCameraStatus');
+      if (diagStatus) diagStatus.innerText = 'Connecting to camera hardware...';
+    }
+
+    function startActiveCameraUI() {
+      document.getElementById('cameraConnectingLoader')?.classList.add('hidden');
+      document.getElementById('cameraPlaceholder')?.classList.add('hidden');
+      document.getElementById('cameraFrameImg')?.classList.remove('hidden');
+      document.getElementById('cameraHudOverlay')?.classList.remove('hidden');
+
+      const badge = document.getElementById('cameraActiveBadge');
+      if (badge) {
+        badge.className = "text-[10px] bg-red-600/20 text-red-400 border border-red-500/40 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
+        badge.innerText = "LIVE STREAMING";
+      }
+
+      const statCam = document.getElementById('statCameraStatus');
+      if (statCam) {
+        statCam.innerText = 'Active';
+        statCam.className = 'text-2xl font-bold text-red-500 mt-1';
+      }
+
+      const diagStatus = document.getElementById('diagCameraStatus');
+      if (diagStatus) diagStatus.innerText = 'Streaming Frames';
+
+      const diagSid = document.getElementById('diagCameraSessionId');
+      if (diagSid && activeCameraSession) diagSid.innerText = activeCameraSession.id;
+
+      // Header Pill
+      const headerPill = document.getElementById('headerCameraPill');
+      if (headerPill) { headerPill.classList.remove('hidden'); headerPill.classList.add('flex'); }
+
+      cameraFramesReceived = 0;
+      cameraSecondsElapsed = 0;
+      clearInterval(cameraTimerInterval);
+      cameraTimerInterval = setInterval(() => {
+        cameraSecondsElapsed++;
+        const mins = String(Math.floor(cameraSecondsElapsed / 60)).padStart(2, '0');
+        const secs = String(cameraSecondsElapsed % 60).padStart(2, '0');
+        const formatted = `${mins}:${secs}`;
+        const hudTimer = document.getElementById('cameraHudTimer');
+        if (hudTimer) hudTimer.innerText = formatted;
+        const headerTimer = document.getElementById('headerCameraTimer');
+        if (headerTimer) headerTimer.innerText = formatted;
+      }, 1000);
+    }
+
+    function resetCameraUI() {
+      clearInterval(cameraTimerInterval);
+      activeCameraSession = null;
+      cameraSecondsElapsed = 0;
+      cameraFramesReceived = 0;
+
+      document.getElementById('cameraPlaceholder')?.classList.remove('hidden');
+      document.getElementById('cameraConnectingLoader')?.classList.add('hidden');
+      document.getElementById('cameraFrameImg')?.classList.add('hidden');
+      document.getElementById('cameraHudOverlay')?.classList.add('hidden');
+
+      const startCameraBtn = document.getElementById('startCameraBtn');
+      const stopCameraBtn = document.getElementById('stopCameraBtn');
+      if (startCameraBtn) startCameraBtn.disabled = !currentUser;
+      if (stopCameraBtn) stopCameraBtn.disabled = true;
+
+      const badge = document.getElementById('cameraActiveBadge');
+      if (badge) {
+        badge.className = "text-[10px] bg-slate-800 text-slate-400 border border-slate-700 px-2 py-0.5 rounded-full font-bold";
+        badge.innerText = "IDLE";
+      }
+
+      const statCam = document.getElementById('statCameraStatus');
+      if (statCam) {
+        statCam.innerText = 'Idle';
+        statCam.className = 'text-2xl font-bold text-slate-300 mt-1';
+      }
+
+      const diagStatus = document.getElementById('diagCameraStatus');
+      if (diagStatus) diagStatus.innerText = 'Idle';
+
+      const diagSid = document.getElementById('diagCameraSessionId');
+      if (diagSid) diagSid.innerText = 'None';
+
+      const headerPill = document.getElementById('headerCameraPill');
+      if (headerPill) { headerPill.classList.add('hidden'); headerPill.classList.remove('flex'); }
+
+      lucide.createIcons();
+    }
+
+    // Handles incoming JPEG frame over Realtime broadcast
+    function onCameraFrameReceived(payload) {
+      if (!payload || !activeCameraSession) return;
+      const p = payload.payload || payload;
+      const data = p.data;
+      if (!data) return;
+
+      const sid = p.sessionId;
+      // Strict session matching: must match active session ID or temporary session ID
+      const isMatch = (activeCameraSession.id && sid === activeCameraSession.id) ||
+                      (activeCameraSession.tempId && sid === activeCameraSession.tempId);
+
+      if (!isMatch) return;
+
+      // Render Base64 JPEG frame on image element
+      const frameImg = document.getElementById('cameraFrameImg');
+      if (frameImg) {
+        frameImg.src = 'data:image/jpeg;base64,' + data;
+        if (frameImg.classList.contains('hidden')) {
+          startActiveCameraUI();
+        }
+      }
+
+      cameraFramesReceived++;
+      cameraFpsFrameCount++;
+
+      // Calculate FPS once per second
+      const now = Date.now();
+      if (now - cameraLastFpsCalcTime >= 1000) {
+        cameraCurrentFps = Math.round((cameraFpsFrameCount * 1000) / (now - cameraLastFpsCalcTime));
+        cameraFpsFrameCount = 0;
+        cameraLastFpsCalcTime = now;
+        const fpsElem = document.getElementById('cameraFpsBadge');
+        if (fpsElem) fpsElem.innerText = `${cameraCurrentFps} FPS`;
+      }
+
+      const framesElem = document.getElementById('cameraFramesCounter');
+      if (framesElem) framesElem.innerText = `Frames: ${cameraFramesReceived}`;
+      const diagFrames = document.getElementById('diagCameraFrames');
+      if (diagFrames) diagFrames.innerText = cameraFramesReceived;
+    }
+
+    // -------------------------------------------------------------------------
+    // EMERGENCY SOS ALERTS ENGINE
+    // -------------------------------------------------------------------------
+    async function loadSosAlerts() {
+      if (!currentUser) return;
+      try {
+        const { data: alerts } = await supabaseClient
+          .from('sos_alerts')
+          .select('*')
+          .eq('child_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        renderSosAlerts(alerts || []);
+      } catch (err) {
+        console.warn("SOS alerts load error:", err);
+      }
+    }
+
+    function renderSosAlerts(alerts) {
+      const list = document.getElementById('sosAlertsList');
+      const banner = document.getElementById('sosBanner');
+      const navCount = document.getElementById('navSosCount');
+      if (!list) return;
+
+      const activeAlerts = alerts.filter(a => a.status === 'active');
+      if (navCount) navCount.innerText = activeAlerts.length;
+
+      // Active Banner
+      if (activeAlerts.length > 0) {
+        const top = activeAlerts[0];
+        banner?.classList.remove('hidden');
+        document.getElementById('sosTitle').innerText = `${top.message || 'Emergency SOS triggered on Child Device!'}`;
+        document.getElementById('sosDetails').innerText = `Battery: ${top.battery_level !== undefined ? top.battery_level + '%' : '--'} • Lat: ${top.latitude || '--'}, Lng: ${top.longitude || '--'} • Acc: ±${top.accuracy || '--'}m`;
+        document.getElementById('sosTime').innerText = formatTimeAgo(new Date(top.created_at));
+
+        document.getElementById('sosResolveBtn').onclick = () => resolveSosAlert(top.id);
+        document.getElementById('sosCenterMapBtn').onclick = () => {
+          switchView('view-location');
+          if (top.latitude && top.longitude) {
+            updateMapLocation(top.latitude, top.longitude, top.accuracy);
+          }
+        };
+
+        playSirenSound();
+      } else {
+        banner?.classList.add('hidden');
+        stopSiren();
+      }
+
+      if (alerts.length === 0) {
+        list.innerHTML = `<div class="text-center py-8 text-slate-500">No SOS alerts recorded</div>`;
+        return;
+      }
+
+      list.innerHTML = alerts.map(a => {
+        const isActive = a.status === 'active';
+        const badgeColor = isActive ? 'bg-red-500/20 text-red-400 border border-red-500/40' : 'bg-slate-800 text-slate-400';
+        return `
+          <div class="p-3.5 rounded-2xl bg-slate-950 border ${isActive ? 'border-red-500/60 bg-red-950/20' : 'border-slate-800'} flex items-center justify-between gap-3">
+            <div class="flex items-center space-x-3 min-w-0">
+              <div class="w-9 h-9 rounded-xl ${isActive ? 'bg-red-600 text-white animate-pulse' : 'bg-slate-800 text-slate-400'} flex items-center justify-center shrink-0">
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full ${badgeColor}">${a.status}</span>
+                  <span class="text-[11px] text-slate-400">${new Date(a.created_at).toLocaleString()}</span>
+                </div>
+                <p class="text-xs font-bold text-white mt-0.5 truncate">${a.message || 'SOS Emergency Button Pressed'}</p>
+                <p class="text-[11px] text-slate-400 font-mono">Coords: ${a.latitude ? a.latitude.toFixed(4) : '--'}, ${a.longitude ? a.longitude.toFixed(4) : '--'} • Bat: ${a.battery_level !== undefined ? a.battery_level + '%' : '--'}</p>
+              </div>
+            </div>
+
+            ${isActive ? `
+              <button onclick="resolveSosAlert('${a.id}')" class="px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs transition shrink-0 flex items-center gap-1">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Resolve</span>
+              </button>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    async function resolveSosAlert(alertId) {
+      if (!alertId) return;
+      try {
+        await supabaseClient
+          .from('sos_alerts')
+          .update({
+            status: 'resolved',
+            resolved_at: new Date().toISOString()
+          })
+          .eq('id', alertId);
+
+        stopSiren();
+        loadSosAlerts();
+      } catch (err) {
+        alert('Could not resolve alert: ' + err.message);
+      }
+    }
+
+    function playSirenSound() {
+      if (sirenOscillator) return;
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.3);
+
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } catch (e) {
+        console.warn("Siren chime warning:", e);
+      }
+    }
+
+    function stopSiren() {
+      // Siren chime stops automatically
+    }
+
+    // -------------------------------------------------------------------------
+    // REMOTE CHECK-IN SESSION HISTORY
+    // -------------------------------------------------------------------------
+    async function loadSessionHistory() {
+      if (!currentUser) return;
+      const list = document.getElementById('sessionHistoryList');
+      if (!list) return;
+
+      try {
+        // Fetch audio sessions
+        const { data: audioSessions } = await supabaseClient
+          .from('audio_sessions')
+          .select('*')
+          .eq('child_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        // Fetch camera sessions
+        let cameraSessions = [];
+        try {
+          const { data: camData } = await supabaseClient
+            .from('camera_sessions')
+            .select('*')
+            .eq('child_id', currentUser.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          cameraSessions = camData || [];
+        } catch (e) {
+          // table might not exist yet
+        }
+
+        const combined = [
+          ...(audioSessions || []).map(s => ({ ...s, sessionType: 'audio' })),
+          ...cameraSessions.map(s => ({ ...s, sessionType: 'camera' }))
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (combined.length === 0) {
+          list.innerHTML = `<div class="text-center py-8 text-slate-500">No session history yet</div>`;
+          return;
+        }
+
+        list.innerHTML = combined.map(s => {
+          const isAudio = s.sessionType === 'audio';
+          const icon = isAudio ? 'mic' : 'video';
+          const iconColor = isAudio ? 'text-amber-400' : 'text-red-400';
+          const typeName = isAudio ? 'Live Audio Check-In' : `Live Camera Stream (${s.camera_lens || 'Back'})`;
+          const badgeColor = s.status === 'ended' ? 'bg-slate-800 text-slate-400' : (s.status === 'active' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-400');
+
+          return `
+            <div class="p-3 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center ${iconColor} shrink-0">
+                  <i data-lucide="${icon}" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <p class="font-bold text-white text-xs">${typeName}</p>
+                  <p class="text-[10px] text-slate-500">${new Date(s.created_at).toLocaleString()} • Duration: ${s.duration_seconds ? s.duration_seconds + 's' : 'In Progress'}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${badgeColor}">
+                ${s.status}
+              </span>
+            </div>
+          `;
+        }).join('');
+
+        lucide.createIcons();
+      } catch (err) {
+        console.warn("Session history error:", err);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // LOCATION HISTORY & MOVEMENT REPLAY
+    // -------------------------------------------------------------------------
+    async function loadChildHistory(range = 'today', customStart = null, customEnd = null) {
+      if (!currentUser) return;
+      currentHistoryRange = range;
+
+      try {
+        let query = supabaseClient
+          .from('location_updates')
+          .select('*')
+          .eq('child_id', currentUser.id)
+          .order('recorded_at', { ascending: true });
+
+        const now = new Date();
+        if (range === 'today') {
+          const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          query = query.gte('recorded_at', start);
+        } else if (range === 'yesterday') {
+          const yest = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+          const start = yest.toISOString();
+          const end = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+          query = query.gte('recorded_at', start).lt('recorded_at', end);
+        } else if (range === '7days') {
+          const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+          query = query.gte('recorded_at', start);
+        } else if (range === '30days') {
+          const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+          query = query.gte('recorded_at', start);
+        } else if (range === 'custom' && customStart) {
+          query = query.gte('recorded_at', new Date(customStart).toISOString());
+          if (customEnd) query = query.lte('recorded_at', new Date(customEnd).toISOString());
+        }
+
+        const { data: points } = await query;
+        historyPoints = points || [];
+        renderHistoryViews();
+      } catch (err) {
+        console.warn("History load error:", err);
+      }
+    }
+
+    function renderHistoryViews() {
+      const pts = historyPoints;
+      document.getElementById('totalPointsCount').innerText = pts.length;
+      document.getElementById('rawCountBadge').innerText = pts.length;
+
+      // Distance calculation
+      let totalDistMeters = 0;
+      for (let i = 1; i < pts.length; i++) {
+        totalDistMeters += getDistanceInMeters(pts[i - 1].latitude, pts[i - 1].longitude, pts[i].latitude, pts[i].longitude);
+      }
+      document.getElementById('totalDistanceCovered').innerText = `${(totalDistMeters / 1000).toFixed(1)} km`;
+
+      // Movement Trail on Map
+      if (historyLeafletMap) {
+        if (historyPolyline) historyLeafletMap.removeLayer(historyPolyline);
+        if (historyStartMarker) historyLeafletMap.removeLayer(historyStartMarker);
+        if (historyEndMarker) historyLeafletMap.removeLayer(historyEndMarker);
+
+        if (pts.length > 0) {
+          const latLngs = pts.map(p => [p.latitude, p.longitude]);
+          historyPolyline = L.polyline(latLngs, { color: '#06b6d4', weight: 4, opacity: 0.85 }).addTo(historyLeafletMap);
+
+          historyStartMarker = L.circleMarker(latLngs[0], { radius: 6, color: '#10b981', fillColor: '#10b981', fillOpacity: 1 }).addTo(historyLeafletMap);
+          historyEndMarker = L.circleMarker(latLngs[latLngs.length - 1], { radius: 7, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1 }).addTo(historyLeafletMap);
+
+          historyLeafletMap.fitBounds(historyPolyline.getBounds(), { padding: [40, 40] });
+        }
+      }
+
+      // Replay scrubber max
+      const scrubber = document.getElementById('replayProgress');
+      if (scrubber) {
+        scrubber.max = Math.max(0, pts.length - 1);
+        scrubber.value = 0;
+      }
+      const stepCounter = document.getElementById('replayStepCounter');
+      if (stepCounter) {
+        stepCounter.innerText = pts.length > 0 ? `0 / ${pts.length}` : `0 / 0`;
+      }
+
+      renderVisitHistory(pts);
+      renderRawTimeline(pts);
+    }
+
+    function renderVisitHistory(pts) {
+      const container = document.getElementById('visitsListContainer');
+      const badge = document.getElementById('visitsCountBadge');
+      if (!container) return;
+
+      if (pts.length < 2) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500">Not enough points to cluster visits</div>`;
+        if (badge) badge.innerText = "0";
+        return;
+      }
+
+      const visits = calculateVisits(pts);
+      if (badge) badge.innerText = visits.length;
+
+      container.innerHTML = visits.map((v, i) => `
+        <div class="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center font-bold text-xs">
+              ${i + 1}
+            </div>
+            <div>
+              <p class="font-bold text-white text-xs">Stay at ${v.lat.toFixed(4)}, ${v.lng.toFixed(4)}</p>
+              <p class="text-[10px] text-slate-500">${v.startTime} - ${v.endTime}</p>
+            </div>
+          </div>
+          <span class="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            ${v.durationMinutes} mins
+          </span>
+        </div>
+      `).join('');
+    }
+
+    function calculateVisits(pts) {
+      const visits = [];
+      let startIdx = 0;
+
+      for (let i = 1; i < pts.length; i++) {
+        const d = getDistanceInMeters(pts[startIdx].latitude, pts[startIdx].longitude, pts[i].latitude, pts[i].longitude);
+        if (d > 75 || i === pts.length - 1) {
+          const t1 = new Date(pts[startIdx].recorded_at);
+          const t2 = new Date(pts[i - 1].recorded_at);
+          const durationMins = Math.round((t2 - t1) / 60000);
+
+          if (durationMins >= 4) {
+            visits.push({
+              lat: pts[startIdx].latitude,
+              lng: pts[startIdx].longitude,
+              startTime: t1.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              endTime: t2.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              durationMinutes: durationMins
+            });
+          }
+          startIdx = i;
+        }
+      }
+      return visits;
+    }
+
+    function renderRawTimeline(pts) {
+      const container = document.getElementById('rawTimelineContainer');
+      if (!container) return;
+
+      if (pts.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-slate-500">No raw breadcrumbs found</div>`;
+        return;
+      }
+
+      container.innerHTML = pts.slice().reverse().map(p => `
+        <div class="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-[11px]">
+          <div>
+            <span class="font-mono text-slate-300 font-bold">${p.latitude.toFixed(5)}, ${p.longitude.toFixed(5)}</span>
+            <span class="text-slate-500 ml-2">±${Math.round(p.accuracy || 10)}m</span>
+          </div>
+          <span class="font-mono text-slate-400">${new Date(p.recorded_at).toLocaleTimeString()}</span>
+        </div>
+      `).join('');
+    }
+
+    function getDistanceInMeters(lat1, lon1, lat2, lon2) {
+      const R = 6371e3;
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    // Replay controls
+    function toggleReplay() {
+      if (replayInterval) {
+        stopReplay();
+      } else {
+        startReplay();
+      }
+    }
+
+    function startReplay() {
+      if (historyPoints.length === 0) return;
+      document.getElementById('replayPlayText').innerText = "Pause";
+
+      replayInterval = setInterval(() => {
+        if (replayIndex >= historyPoints.length - 1) {
+          stopReplay();
+          return;
+        }
+        replayIndex++;
+        updateReplayUI(replayIndex);
+      }, 700 / replaySpeed);
+    }
+
+    function stopReplay() {
+      clearInterval(replayInterval);
+      replayInterval = null;
+      const btn = document.getElementById('replayPlayText');
+      if (btn) btn.innerText = "Play Replay";
+    }
+
+    function resetReplayState() {
+      stopReplay();
+      replayIndex = 0;
+      updateReplayUI(0);
+    }
+
+    function updateReplayUI(idx) {
+      if (!historyPoints || historyPoints.length === 0) return;
+      if (idx < 0) idx = 0;
+      if (idx >= historyPoints.length) idx = historyPoints.length - 1;
+      const pt = historyPoints[idx];
+
+      const scrubber = document.getElementById('replayProgress');
+      if (scrubber) scrubber.value = idx;
+      const stepCounter = document.getElementById('replayStepCounter');
+      if (stepCounter) stepCounter.innerText = `${idx + 1} / ${historyPoints.length}`;
+      const timeElem = document.getElementById('replayCurrentTime');
+      if (timeElem && pt.recorded_at) timeElem.innerText = new Date(pt.recorded_at).toLocaleTimeString();
+
+      if (historyLeafletMap) {
+        if (!replayMarker) {
+          replayMarker = L.circleMarker([pt.latitude, pt.longitude], {
+            radius: 8,
+            color: '#06b6d4',
+            fillColor: '#38bdf8',
+            fillOpacity: 1
+          }).addTo(historyLeafletMap);
+        } else {
+          replayMarker.setLatLng([pt.latitude, pt.longitude]);
+        }
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // SUPABASE REALTIME MULTIPLEXED SUBSCRIPTION (Single-Channel Hub)
+    // -------------------------------------------------------------------------
+    function subscribeToRealtime() {
+      if (!currentUser) return;
+      if (realtimeChannel) { supabaseClient.removeChannel(realtimeChannel); realtimeChannel = null; }
+      if (userRealtimeChannel) { supabaseClient.removeChannel(userRealtimeChannel); userRealtimeChannel = null; }
+      if (childRealtimeChannel) { supabaseClient.removeChannel(childRealtimeChannel); childRealtimeChannel = null; }
+
+      const onAudioChunk = (payload) => {
+        if (!activeAudioSession || !payload) return;
+        const p = payload.payload || payload;
+        if (!p || !p.data) return;
+        const sid = p.sessionId;
+        const isMatch = (activeAudioSession.id && sid === activeAudioSession.id) ||
+                        (activeAudioSession.tempId && sid === activeAudioSession.tempId);
+
+        if (!isMatch) return;
+
+        // Switch to live UI upon receiving the first valid audio chunk
+        const badge = document.getElementById('audioActiveBadge');
+        if (badge && badge.innerText.includes('WAITING')) {
+          startActiveStreamingUI();
+        }
+
+        playIncomingPcmChunk(p.data);
+      };
+
+      const onAudioControl = (payload) => {
+        if (!payload) return;
+        const p = payload.payload || payload;
+        const action = p.action;
+        const sid = p.sessionId;
+
+        const isMatch = !activeAudioSession ||
+                        (activeAudioSession.id && sid === activeAudioSession.id) ||
+                        (activeAudioSession.tempId && sid === activeAudioSession.tempId);
+        if (!isMatch) return;
+
+        if (action === 'accepted') {
+          showActiveAudioSessionUI('Child accepted! Connecting microphone...');
+        } else if (action === 'declined') {
+          alert('Child declined the audio listening request.');
+          resetAudioUI();
+          loadSessionHistory();
+        } else if (action === 'end' && activeAudioSession) {
+          resetAudioUI();
+          loadSessionHistory();
+        }
+      };
+
+      const onCameraFrame = (payload) => {
+        onCameraFrameReceived(payload);
+      };
+
+      const onCameraControl = (payload) => {
+        if (!payload) return;
+        const p = payload.payload || payload;
+        const action = p.action;
+        const sid = p.sessionId;
+
+        const isMatch = !activeCameraSession ||
+                        (activeCameraSession.id && sid === activeCameraSession.id) ||
+                        (activeCameraSession.tempId && sid === activeCameraSession.tempId);
+        if (!isMatch) return;
+
+        if (action === 'accepted') {
+          const diagStatus = document.getElementById('diagCameraStatus');
+          if (diagStatus) diagStatus.innerText = 'Child accepted. Waiting for first frame...';
+          const badge = document.getElementById('cameraActiveBadge');
+          if (badge) badge.innerText = "ACCEPTED - STARTING STREAM";
+        } else if (action === 'declined') {
+          alert('Child declined the camera streaming request.');
+          resetCameraUI();
+          loadSessionHistory();
+        } else if (action === 'end' && activeCameraSession) {
+          resetCameraUI();
+          loadSessionHistory();
+        }
+      };
+
+      // 1. Parent Channel
+      realtimeChannel = supabaseClient.channel(`parent_${currentUser.id}`, {
+        config: { broadcast: { self: false } }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'device_status' }, (payload) => {
+        if (payload.new && payload.new.child_id === currentUser.id) {
+          currentDeviceStatus = payload.new;
+          updateDeviceStatusUI(payload.new);
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'child_devices' }, (payload) => {
+        if (payload.new && payload.new.user_id === currentUser.id) {
+          loadUserDevice(false);
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'camera_sessions' }, (payload) => {
+        if (activeCameraSession && payload.new && payload.new.id === activeCameraSession.id) {
+          if (payload.new.status === 'declined') {
+            alert('Child device declined camera stream.');
+            resetCameraUI();
+            loadSessionHistory();
+          } else if (payload.new.status === 'ended') {
+            resetCameraUI();
+            loadSessionHistory();
+          }
+        }
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'audio_sessions' }, (payload) => {
+        if (activeAudioSession && payload.new && payload.new.id === activeAudioSession.id) {
+          if (payload.new.status === 'declined') {
+            alert('Child device declined audio stream.');
+            resetAudioUI();
+            loadSessionHistory();
+          } else if (payload.new.status === 'ended') {
+            resetAudioUI();
+            loadSessionHistory();
+          }
+        }
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sos_alerts' }, () => {
+        loadSosAlerts();
+      })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'location_updates' }, (payload) => {
+        if (payload.new && payload.new.child_id === currentUser.id) {
+          updateMapLocation(payload.new.latitude, payload.new.longitude, payload.new.accuracy, payload.new.recorded_at, payload.new.provider, payload.new.is_mock);
+          if (historyPoints && currentHistoryRange === 'today') {
+            historyPoints.push(payload.new);
+            renderHistoryViews();
+          }
+        }
+      })
+      .on('broadcast', { event: 'audio_chunk' }, onAudioChunk)
+      .on('broadcast', { event: 'audio_control' }, onAudioControl)
+      .on('broadcast', { event: 'camera_frame' }, onCameraFrame)
+      .on('broadcast', { event: 'camera_control' }, onCameraControl)
+      .subscribe();
+
+      // 2. User Channel
+      userRealtimeChannel = supabaseClient.channel(`user_${currentUser.id}`, {
+        config: { broadcast: { self: false } }
+      })
+      .on('broadcast', { event: 'audio_chunk' }, onAudioChunk)
+      .on('broadcast', { event: 'audio_control' }, onAudioControl)
+      .on('broadcast', { event: 'camera_frame' }, onCameraFrame)
+      .on('broadcast', { event: 'camera_control' }, onCameraControl)
+      .subscribe();
+
+      // 3. Child direct Channel
+      childRealtimeChannel = supabaseClient.channel(`child_${currentUser.id}`, {
+        config: { broadcast: { self: false } }
+      })
+      .on('broadcast', { event: 'audio_chunk' }, onAudioChunk)
+      .on('broadcast', { event: 'audio_control' }, onAudioControl)
+      .on('broadcast', { event: 'camera_frame' }, onCameraFrame)
+      .on('broadcast', { event: 'camera_control' }, onCameraControl)
+      .subscribe();
+    }
+
+    function switchHistoryTab(tabName) {
+      const tabTrailMap = document.getElementById('tabTrailMap');
+      const tabVisits = document.getElementById('tabVisits');
+      const tabRawTimeline = document.getElementById('tabRawTimeline');
+      const viewTrailMap = document.getElementById('viewTrailMap');
+      const viewVisits = document.getElementById('viewVisits');
+      const viewRawTimeline = document.getElementById('viewRawTimeline');
+
+      [tabTrailMap, tabVisits, tabRawTimeline].forEach(t => {
+        if (t) t.className = "px-3.5 py-1.5 rounded-lg font-medium text-slate-400 hover:text-slate-200 border border-transparent flex items-center gap-1.5 transition";
+      });
+      [viewTrailMap, viewVisits, viewRawTimeline].forEach(v => v?.classList.add('hidden'));
+
+      if (tabName === 'trail') {
+        tabTrailMap.className = "px-3.5 py-1.5 rounded-lg font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-1.5 transition";
+        viewTrailMap.classList.remove('hidden');
+        setTimeout(() => { if (historyLeafletMap) historyLeafletMap.invalidateSize(); }, 200);
+      } else if (tabName === 'visits') {
+        tabVisits.className = "px-3.5 py-1.5 rounded-lg font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-1.5 transition";
+        viewVisits.classList.remove('hidden');
+      } else if (tabName === 'raw') {
+        tabRawTimeline.className = "px-3.5 py-1.5 rounded-lg font-bold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center gap-1.5 transition";
+        viewRawTimeline.classList.remove('hidden');
+      }
+    }
+
+    function formatTimeAgo(date) {
+      const sec = Math.floor((new Date() - date) / 1000);
+      if (sec < 60) return 'Just now';
+      const min = Math.floor(sec / 60);
+      if (min < 60) return `${min}m ago`;
+      const hrs = Math.floor(min / 60);
+      return `${hrs}h ago`;
+    }
+
+    function setupEventListeners() {
+      // History filter buttons
+      document.querySelectorAll('.history-filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.history-filter-btn').forEach(b => {
+            b.className = "history-filter-btn px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 font-medium transition";
+          });
+          e.currentTarget.className = "history-filter-btn px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 font-semibold transition";
+          const range = e.currentTarget.dataset.range;
+          loadChildHistory(range);
+        });
+      });
+
+      document.getElementById('applyCustomDateBtn')?.addEventListener('click', () => {
+        const start = document.getElementById('historyStartDate').value;
+        const end = document.getElementById('historyEndDate').value;
+        if (!start) {
+          alert('Please pick a start date');
+          return;
+        }
+        loadChildHistory('custom', start, end);
+      });
+
+      // History subtabs
+      document.getElementById('tabTrailMap')?.addEventListener('click', () => switchHistoryTab('trail'));
+      document.getElementById('tabVisits')?.addEventListener('click', () => switchHistoryTab('visits'));
+      document.getElementById('tabRawTimeline')?.addEventListener('click', () => switchHistoryTab('raw'));
+
+      // Replay buttons
+      document.getElementById('replayPlayBtn')?.addEventListener('click', toggleReplay);
+      document.getElementById('replayResetBtn')?.addEventListener('click', resetReplayState);
+      document.getElementById('replayProgress')?.addEventListener('input', (e) => {
+        if (replayInterval) clearInterval(replayInterval);
+        replayInterval = null;
+        document.getElementById('replayPlayText').innerText = "Resume";
+        replayIndex = parseInt(e.target.value, 10);
+        updateReplayUI(replayIndex);
+      });
+
+      document.querySelectorAll('.replay-speed-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          document.querySelectorAll('.replay-speed-btn').forEach(b => {
+            b.className = "replay-speed-btn px-2 py-0.5 rounded bg-slate-800 text-slate-400 font-mono text-[10px]";
+          });
+          e.currentTarget.className = "replay-speed-btn px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 font-mono font-bold text-[10px]";
+          replaySpeed = parseFloat(e.currentTarget.dataset.speed) || 1;
+        });
+      });
+
+      // Refresh buttons
+      document.getElementById('refreshSosBtn')?.addEventListener('click', loadSosAlerts);
+      document.getElementById('refreshSessionsBtn')?.addEventListener('click', loadSessionHistory);
+
+      // Window resize map fix
+      window.addEventListener('resize', () => {
+        if (leafletMap) leafletMap.invalidateSize();
+        if (historyLeafletMap) historyLeafletMap.invalidateSize();
+      });
+
+      // Periodic heartbeat to refresh device status every 25 seconds
+      setInterval(() => {
+        if (currentUser) {
+          loadUserDevice(false);
+        }
+      }, 25000);
+    }
+  </script>
+</body>
+</html>
