@@ -2,7 +2,7 @@
    Requires supabase/personal-finance.sql to be applied once in Supabase SQL Editor. */
 (function(){
 'use strict';
-var pf = {accounts:[],transactions:[],goals:[],contributions:[],loans:[],payments:[],categories:[],editing:{income:null,expense:null},ready:false,loading:false};
+var pf = {accounts:[],transactions:[],goals:[],contributions:[],loans:[],payments:[],categories:[],editing:{income:null,expense:null},ready:false,loading:false,busyEntry:false,busyTransfer:false};
 var pfDefaultAccounts=[
  {name:'Cash',account_type:'cash',opening_balance:0,is_savings:false},
  {name:'Bank',account_type:'bank',opening_balance:0,is_savings:false},
@@ -118,11 +118,13 @@ function pfDashboard(){
  var chart=document.getElementById('pfCashFlowChart');if(chart){var days=[];for(var i=5;i>=0;i--){var d=new Date();d.setMonth(d.getMonth()-i);var key=d.toISOString().slice(0,7);var x={key:key,label:key.slice(5),income:0,expense:0};pf.transactions.forEach(function(t){if(String(t.occurred_on).slice(0,7)===key){if(pfIncome(t))x.income+=Number(t.amount);if(pfExpense(t))x.expense+=Number(t.amount);}});days.push(x);}var max=Math.max(1,...days.map(function(x){return Math.max(x.income,x.expense);}));chart.innerHTML='<div class="pf-bars">'+days.map(function(x){return '<div class="pf-bar-col"><div class="pf-bar-pair"><span class="pf-bar" title="Income '+pfMoney(x.income)+'" style="height:'+Math.max(2,x.income/max*100)+'%"></span><span class="pf-bar exp" title="Expense '+pfMoney(x.expense)+'" style="height:'+Math.max(2,x.expense/max*100)+'%"></span></div><small>'+x.label+'</small></div>';}).join('')+'</div><p class="pf-hint">■ Income &nbsp; <span style="color:#fb7185">■</span> Expenses · NPR';}
 }
 window.savePersonalEntry=async function(kind){
+ if(pf.busyEntry)return;pf.busyEntry=true;
  var exp=kind==='expense',id=pf.editing[kind],date=document.getElementById(exp?'peDate':'piDate').value||pfDate(),desc=(document.getElementById(exp?'peItem':'piSource').value||'').trim(),amount=Number(document.getElementById(exp?'peAmt':'piAmt').value),category=document.getElementById(exp?'peCat':'piCat').value,account=document.getElementById(exp?'peAccount':'piAccount').value,note=(document.getElementById(exp?'peNote':'piNote').value||'').trim();
  if(!desc||!(amount>0)||!account)return alert(pfT('विवरण, खाता र सही रकम भर्नुहोस्।','Enter a description, account and valid amount.'));
  var payload={user_id:pfUid(),account_id:account,kind:kind,amount:amount,occurred_on:date,category:category,description:desc,note:note||null};
  try{var q=id?await supa.from('personal_transactions').update(payload).eq('id',id).eq('user_id',pfUid()):await supa.from('personal_transactions').insert(payload);if(q.error)throw new Error(q.error.message);window.cancelPersonalEdit(kind);await window.renderPersonalAll();alert(pfT('सेभ भयो।','Saved successfully.'));}
  catch(e){alert(pfT('सेभ गर्न सकिएन: ','Could not save: ')+e.message);}
+ finally{pf.busyEntry=false;}
 };
 window.cancelPersonalEdit=function(kind){
  pf.editing[kind]=null;var exp=kind==='expense';['Date','Item','Amt','Note'].forEach(function(s){var id=(exp?'pe':'pi')+s;var e=document.getElementById(id);if(e)e.value='';});
@@ -160,9 +162,14 @@ window.renderPersonalAccountHistory=function(){
 };
 window.savePersonalTransfer=async function(){
  var from=document.getElementById('pfTransferFrom').value,to=document.getElementById('pfTransferTo').value,amount=Number(document.getElementById('pfTransferAmount').value),date=document.getElementById('pfTransferDate').value||pfDate(),note=(document.getElementById('pfTransferNote').value||'').trim();
+ if(pf.busyTransfer)return;
  if(!from||!to||from===to||!(amount>0))return alert('Choose two different accounts and enter a valid amount.');
+ var source=pf.accounts.find(function(a){return a.id===from;});
+ if(!source||pfAccBalance(source)<amount)return alert('Insufficient balance in the source account.');
+ pf.busyTransfer=true;
  var id=crypto.randomUUID();var base={user_id:pfUid(),amount:amount,occurred_on:date,category:'Account Transfer',description:note||'Account transfer',note:note||null,transfer_id:id};
  try{await pfInsert('personal_transactions',[Object.assign({},base,{account_id:from,kind:'transfer_out'}),Object.assign({},base,{account_id:to,kind:'transfer_in'})]);document.getElementById('pfTransferAmount').value='';document.getElementById('pfTransferNote').value='';await window.renderPersonalAll();alert('Transfer completed.');}catch(e){alert('Transfer failed: '+e.message);}
+ finally{pf.busyTransfer=false;}
 };
 function pfRenderTransfers(){
  var grouped={};pf.transactions.filter(function(t){return t.transfer_id;}).forEach(function(t){grouped[t.transfer_id]=grouped[t.transfer_id]||[];grouped[t.transfer_id].push(t);});
