@@ -3075,10 +3075,7 @@ function goToDash() {
   } else {
     showProfileSelection();
   }
-  setTimeout(function() {
-    try { renderAll(); } catch(e) {}
-    try { renderPersonalAll(); } catch(e) {}
-  }, 50);
+  // enterMode() loads only the selected workspace; do not fetch both datasets.
 }
 function goToAuth() {
   appMode = null;
@@ -3145,18 +3142,25 @@ toggleBtn.addEventListener('click', () => {
 nav.addEventListener('click', e => {
   const btn = e.target.closest('button[data-target]');
   if (!btn) return;
+  const id = btn.dataset.target;
+  const requiredMode = btn.dataset.mode || '';
+  // Ignore stale or cross-workspace navigation events.
+  if (requiredMode && requiredMode !== appMode) return;
+  if (requiredMode && !currentUser) return;
+
   nav.querySelectorAll('button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  sections.forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(btn.dataset.target);
+  sections.forEach(section => section.classList.remove('active'));
+  const target = document.getElementById(id);
   if (target) target.classList.add('active');
   if (window.innerWidth <= 820) {
     sidebar.classList.add('hidden');
     sidebar.classList.remove('open');
   }
-  const id = btn.dataset.target;
+
+  // Business navigation only renders business modules.
   if (id === 'expanse') { window.renderExpanse(); window.updateExpanseSummary(); }
-  if (id === 'income')  { window.renderIncome();  window.updateExpanseSummary(); }
+  if (id === 'income')  { window.renderIncome(); window.updateExpanseSummary(); }
   if (id === 'yearly')  { window.renderYearSelect(); }
   if (id === 'care')    { window.renderCare(); window.updateCareSummary(); }
   if (id === 'eggs')    { window.renderEggs(); window.updateEggsSummary(); }
@@ -3164,11 +3168,12 @@ nav.addEventListener('click', e => {
   if (id === 'chick')   { window.renderFeed(); window.renderVaccinations(); window.renderOrders(); window.updateOrderSummary(); window.loadFeedOpening(); }
   if (id === 'loan')    { window.renderLoans(); }
   if (id === 'task')    { if (window.renderTasks) window.renderTasks(); if (window.updateTaskSummary) window.updateTaskSummary(); }
-  if (id === 'home')    { showHome(); }
-  if (id === 'perDash' || id === 'perExp' || id === 'perInc' || id === 'perParty') {
-    enterMode('personal');
-    renderPersonalAll();
-  }
+
+  // Personal navigation keeps the chosen screen; it does not jump back to dashboard.
+  if (id === 'perDash') window.renderPersonalAll();
+  if (id === 'perExp' || id === 'perInc') window.renderPersonalTables();
+  if (id === 'perParty') window.renderPersonalParties();
+  if (id === 'home') showHome();
 });
 
 // ── Helpers ────────────────────────────────────────────────────────────
