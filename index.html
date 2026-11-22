@@ -2732,7 +2732,7 @@ window.enterMode = function(mode) {
   if (mode === 'business') {
     if (nb) nb.style.display = 'block';
     if (np) np.style.display = 'none';
-    if (lab) lab.textContent = '🏢 Business';
+    if (lab) lab.textContent = LANG === 'en' ? '🏢 Business' : '🏢 व्यवसाय';
     sections.forEach(function(s) { s.classList.remove('active'); });
     var exp = document.getElementById('expanse');
     if (exp) exp.classList.add('active');
@@ -2743,7 +2743,7 @@ window.enterMode = function(mode) {
   } else {
     if (nb) nb.style.display = 'none';
     if (np) np.style.display = 'block';
-    if (lab) lab.textContent = '👤 Personal';
+    if (lab) lab.textContent = LANG === 'en' ? '👤 Personal' : '👤 व्यक्तिगत';
     sections.forEach(function(s) { s.classList.remove('active'); });
     var pd = document.getElementById('perDash');
     if (pd) pd.classList.add('active');
@@ -3007,6 +3007,14 @@ function applyAppLanguage() {
   set('suCreateBtn', en ? '✨ Create Account' : '✨ खाता बनाउनुहोस्');
   set('homeHello', en ? 'Hello 👋' : 'नमस्ते 👋');
   set('navModeLabel', en ? 'WORKSPACE' : 'कार्य क्षेत्र');
+  var languageNav = nav && nav.querySelector('button[onclick="openLanguageSettings()"]');
+  if (languageNav) languageNav.textContent = en ? '🌐 Language' : '🌐 भाषा / Language';
+  var logoutNav = nav && nav.querySelector('button[onclick="doLogout()"]');
+  if (logoutNav) logoutNav.textContent = en ? '🚪 Log out' : '🚪 लगआउट';
+  var homeHelp = document.querySelector('#home .home-help');
+  if (homeHelp) homeHelp.innerHTML = en
+    ? '💡 <b>Quick tip:</b> Choose Business Management for your shop or farm accounts. Choose Personal Finance for household expenses and personal income.'
+    : '💡 <b>सजिलो सुझाव:</b> तपाईं फार्म वा पसलको हिसाब राख्दै हुनुहुन्छ भने “व्यवसाय व्यवस्थापन” छान्नुहोस्। आफ्नो घरखर्च र व्यक्तिगत आम्दानी राख्न “व्यक्तिगत हिसाब” छान्नुहोस्।';
   var authSub = document.querySelector('.auth-sub');
   if (authSub) authSub.textContent = en ? 'Business accounting — simple and secure' : 'व्यवसायको हिसाबकिताब — सजिलो र सुरक्षित';
   var authFooter = document.querySelector('.auth-footer');
@@ -3192,7 +3200,7 @@ function printSection(sectionId) {
   if (!section) return alert('Section not found');
   const win = window.open('', '_blank', 'width=900,height=700');
   const styles = `<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#06b6d4;color:#fff}</style>`;
-  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body>${section.innerHTML}</body></html>`);
+  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body class="onboarding-only">${section.innerHTML}</body></html>`);
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 300);
 }
