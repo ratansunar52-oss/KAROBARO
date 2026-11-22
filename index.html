@@ -529,6 +529,58 @@ body.auth-only #auth{display:block!important}
   .home-title{font-size:22px}
 }
 
+
+/* ══ HamroKarobar onboarding ══ */
+.onboarding-only .topbar,.onboarding-only .sidebar{display:none!important}
+.onboarding-only .content{margin:0!important;padding:0!important;width:100%;min-height:100vh}
+.onboarding-only .section{display:none!important}
+.onboarding-only #languageScreen.active,.onboarding-only #splashScreen.active,.onboarding-only #profileScreen.active{display:flex!important}
+#languageScreen,#splashScreen,#profileScreen{min-height:100vh;align-items:center;justify-content:center;padding:28px 18px;box-sizing:border-box}
+#languageScreen{background:radial-gradient(circle at 15% 10%,rgba(34,211,238,.2),transparent 32%),linear-gradient(145deg,#071827,#0f3444 55%,#102b40);color:#fff}
+.onboard-panel{width:100%;max-width:520px;margin:auto}
+.onboard-eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#67e8f9;margin-bottom:12px}
+.onboard-heading{font-size:clamp(26px,6vw,36px);font-weight:850;letter-spacing:-.7px;line-height:1.16;margin:0 0 10px;color:inherit}
+.onboard-copy{font-size:14px;line-height:1.65;color:rgba(255,255,255,.7);margin:0 0 25px}
+.language-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.language-option{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:16px;padding:20px 14px;text-align:left;cursor:pointer;transition:.18s}
+.language-option.selected{border:2px solid #67e8f9;background:rgba(8,145,178,.2);box-shadow:0 0 0 3px rgba(103,232,249,.12)}
+.language-option .flag{font-size:30px;display:block;margin-bottom:13px}
+.language-option strong{display:block;font-size:16px}
+.language-option small{display:block;color:rgba(255,255,255,.62);font-size:12px;margin-top:5px}
+.onboard-primary{width:100%;border:0;border-radius:12px;padding:15px 18px;margin-top:22px;background:linear-gradient(110deg,#22d3ee,#0891b2);color:#062b3b;font-size:15px;font-weight:850;cursor:pointer;box-shadow:0 10px 24px rgba(8,145,178,.22)}
+.onboard-primary:disabled{opacity:.45;cursor:not-allowed}
+#splashScreen{background:radial-gradient(circle at 50% 40%,rgba(34,211,238,.18),transparent 35%),linear-gradient(145deg,#061522,#0c3042 58%,#101d32);color:#fff;text-align:center}
+.splash-mark{width:104px;height:104px;border-radius:30px;margin:0 auto 22px;display:grid;place-items:center;background:linear-gradient(145deg,#ecfeff,#a5f3fc);box-shadow:0 18px 48px rgba(34,211,238,.22);font-size:48px;animation:brandFloat 2.2s ease-in-out infinite}
+.splash-name{font-size:29px;font-weight:900;letter-spacing:-.7px;margin:0}
+.splash-tag{font-size:13px;color:rgba(255,255,255,.62);margin-top:9px}
+.splash-dots{display:flex;justify-content:center;gap:6px;margin-top:30px}
+.splash-dots i{width:6px;height:6px;border-radius:50%;background:#67e8f9;animation:splashPulse .9s ease-in-out infinite alternate}
+.splash-dots i:nth-child(2){animation-delay:.15s}.splash-dots i:nth-child(3){animation-delay:.3s}
+@keyframes brandFloat{50%{transform:translateY(-5px)}}@keyframes splashPulse{to{opacity:.25;transform:scale(.7)}}
+#profileScreen{background:#f4f7fb;color:#102033}
+.profile-panel{width:100%;max-width:960px;margin:auto}
+.profile-panel .onboard-eyebrow{color:#0e7490}
+.profile-panel .onboard-heading{color:#102033}
+.profile-panel .onboard-copy{color:#64748b;max-width:620px}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:25px}
+.profile-choice{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-height:330px;padding:22px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;color:#102033;cursor:pointer;box-shadow:0 8px 26px rgba(15,23,42,.06);transition:transform .18s,border-color .18s,box-shadow .18s}
+.profile-choice:hover{transform:translateY(-3px);border-color:#67c7d5;box-shadow:0 16px 36px rgba(15,23,42,.1)}
+.profile-art{width:100%;height:150px;display:grid;place-items:center;border-radius:14px;margin-bottom:18px;background:linear-gradient(135deg,#e0f2fe,#ecfeff)}
+.profile-choice.personal .profile-art{background:linear-gradient(135deg,#ede9fe,#f5f3ff)}
+.profile-art svg{width:100%;height:100%;max-width:220px}
+.profile-choice h3{font-size:19px;font-weight:850;margin:0 0 8px}
+.profile-choice p{font-size:13px;color:#64748b;line-height:1.6;margin:0}
+.profile-select-mark{position:absolute;right:18px;top:18px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#0f766e;color:#fff;font-size:15px}
+.profile-choice.personal .profile-select-mark{background:#6d28d9}
+.profile-back{border:0;background:transparent;color:#64748b;font-size:12px;font-weight:700;margin-top:20px;cursor:pointer;padding:8px 0}
+.language-modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.58);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px}
+.language-modal{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.25)}
+.language-modal h3{margin:0 0 6px;font-size:19px;color:#0f172a}
+.language-modal p{font-size:13px;color:#64748b;margin:0 0 16px}
+.language-modal button{width:100%;text-align:left;border:1px solid #e2e8f0;border-radius:11px;background:#fff;padding:13px;margin-top:8px;font-weight:700;color:#0f172a;cursor:pointer}
+.language-modal button.selected{border-color:#0891b2;background:#ecfeff}
+@media(max-width:680px){.profile-grid{grid-template-columns:1fr}.profile-choice{min-height:unset}.profile-art{height:125px}.language-options{gap:9px}.language-option{padding:17px 12px}}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -582,10 +634,42 @@ body.auth-only #auth{display:block!important}
       <button data-target="perInc" data-mode="personal">💰 आम्दानी विवरण</button>
       <button data-target="perParty" data-mode="personal">👥 पार्टी / बाँकी</button>
     </div>
+    <button type="button" class="nav-home-btn" style="margin-top:8px" onclick="openLanguageSettings()">🌐 भाषा / Language</button>
     <button type="button" class="nav-glow nav-glow-red" style="margin-top:10px" onclick="doLogout()">🚪 लगआउट</button>
   </nav>
 </aside>
 <main class="content" id="mainContent">
+
+  <!-- FIRST-RUN LANGUAGE -->
+  <section id="languageScreen" class="section">
+    <div class="onboard-panel">
+      <div class="onboard-eyebrow">HAMROKAROBAR · WELCOME</div>
+      <h1 class="onboard-heading" id="languageHeading">Choose your language</h1>
+      <p class="onboard-copy" id="languageCopy">Select the language you want to use in the app. You can change it later in Settings.</p>
+      <div class="language-options">
+        <button type="button" class="language-option selected" id="chooseNepali" onclick="chooseOnboardingLanguage('ne')">
+          <span class="flag">🇳🇵</span><strong>नेपाली</strong><small>नेपाली भाषा</small>
+        </button>
+        <button type="button" class="language-option" id="chooseEnglish" onclick="chooseOnboardingLanguage('en')">
+          <span class="flag">🇬🇧</span><strong>English</strong><small>English language</small>
+        </button>
+      </div>
+      <button type="button" class="onboard-primary" id="languageContinue" onclick="continueFromLanguage()">Continue →</button>
+    </div>
+  </section>
+
+  <!-- BRAND SPLASH -->
+  <section id="splashScreen" class="section">
+    <div>
+      <div class="splash-mark">📒</div>
+      <h1 class="splash-name">HamroKarobar</h1>
+      <p class="splash-tag" id="splashTagline">Your business. Your finances. In control.</p>
+      <div class="splash-dots"><i></i><i></i><i></i></div>
+    </div>
+  </section>
+
+  <!-- AUTH -->
+
 
   <!-- ══ AUTH ══ -->
   <section id="auth" class="section active">
@@ -673,6 +757,54 @@ body.auth-only #auth{display:block!important}
         </div>
       </div>
       <div class="home-help">💡 <b>सजिलो सुझाव:</b> तपाईं फार्म वा पसलको हिसाब राख्दै हुनुहुन्छ भने “व्यवसाय व्यवस्थापन” छान्नुहोस्। आफ्नो घरखर्च र व्यक्तिगत आम्दानी राख्न “व्यक्तिगत हिसाब” छान्नुहोस्।</div>
+    </div>
+  </section>
+
+  <!-- PROFILE SELECTION: shown only after authentication -->
+  <section id="profileScreen" class="section">
+    <div class="profile-panel">
+      <div class="onboard-eyebrow" id="profileEyebrow">YOUR WORKSPACE</div>
+      <h2 class="onboard-heading" id="profileHeading">Select Your Profile</h2>
+      <p class="onboard-copy" id="profileCopy">Choose the workspace that matches what you want to manage. You can switch later.</p>
+      <div class="profile-grid">
+        <button type="button" class="profile-choice business" onclick="enterMode('business')">
+          <span class="profile-select-mark">✓</span>
+          <div class="profile-art">
+            <svg viewBox="0 0 240 150" role="img" aria-label="Business management illustration">
+              <rect x="48" y="30" width="144" height="100" rx="12" fill="#fff" stroke="#0e7490" stroke-width="3"/>
+              <rect x="68" y="49" width="104" height="12" rx="4" fill="#cffafe"/>
+              <rect x="68" y="72" width="46" height="39" rx="5" fill="#e0f2fe"/>
+              <rect x="122" y="72" width="50" height="7" rx="3" fill="#67e8f9"/>
+              <rect x="122" y="86" width="40" height="7" rx="3" fill="#bae6fd"/>
+              <rect x="122" y="100" width="30" height="7" rx="3" fill="#bae6fd"/>
+              <path d="M82 101V91l9-8 9 8v10" fill="none" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+              <path d="M36 130h168" stroke="#0e7490" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="184" cy="28" r="16" fill="#14b8a6"/><path d="M176 28l6 6 11-13" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 id="businessProfileTitle">Business Management</h3>
+          <p id="businessProfileDesc">Manage your business, income, expenses, loans, inventory and daily transactions in one place.</p>
+        </button>
+        <button type="button" class="profile-choice personal" onclick="enterMode('personal')">
+          <span class="profile-select-mark">✓</span>
+          <div class="profile-art">
+            <svg viewBox="0 0 240 150" role="img" aria-label="Personal finance illustration">
+              <rect x="66" y="23" width="108" height="112" rx="14" fill="#fff" stroke="#7c3aed" stroke-width="3"/>
+              <rect x="82" y="40" width="76" height="10" rx="4" fill="#ede9fe"/>
+              <rect x="82" y="61" width="31" height="31" rx="7" fill="#ddd6fe"/>
+              <path d="M89 80l7-9 6 5 5-8" fill="none" stroke="#7c3aed" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="121" y="62" width="37" height="6" rx="3" fill="#c4b5fd"/>
+              <rect x="121" y="75" width="29" height="6" rx="3" fill="#ddd6fe"/>
+              <rect x="82" y="103" width="76" height="16" rx="6" fill="#f5f3ff"/>
+              <circle cx="180" cy="35" r="17" fill="#8b5cf6"/><path d="M180 24v22m-6-16c0-4 12-4 12 0s-12 4-12 8 12 4 12 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              <path d="M43 132h154" stroke="#7c3aed" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 id="personalProfileTitle">Personal Finance</h3>
+          <p id="personalProfileDesc">Manage your personal income, expenses, savings and financial activities.</p>
+        </button>
+      </div>
+      <button type="button" class="profile-back" onclick="openLanguageSettings()">🌐 <span id="profileLanguageLink">Change language</span></button>
     </div>
   </section>
 
@@ -2118,7 +2250,8 @@ var supa = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 let currentUser = null;
-const LANG = 'ne';
+let LANG = (function(){try{return localStorage.getItem('hk_language') || 'ne';}catch(e){return 'ne';}})();
+let onboardingLanguage = LANG;
 
 const T = {
   ne: { loginFirst:'कृपया पहिले लगइन गर्नुहोस्', fillAll:'कृपया सबै आवश्यक फाँट भर्नुहोस्', deleteConfirm:'के हटाउनै चाहनुहुन्छ?', updateSuccess:'अपडेट सफल भयो', updateError:'अपडेटमा त्रुटि' },
@@ -2588,8 +2721,11 @@ window.showHome = function() {
 };
 
 window.enterMode = function(mode) {
-  if (!currentUser) return alert('पहिले लगइन गर्नुहोस्');
+  if (!currentUser) return alert(LANG === 'en' ? 'Please log in first.' : 'पहिले लगइन गर्नुहोस्');
+  if (mode !== 'business' && mode !== 'personal') return;
   appMode = mode;
+  try { localStorage.setItem(_profileStorageKey(), mode); } catch(e) {}
+  document.body.classList.remove('onboarding-only','auth-only');
   var nb = document.getElementById('navBusiness');
   var np = document.getElementById('navPersonal');
   var lab = document.getElementById('navModeLabel');
@@ -2761,29 +2897,185 @@ window.renderPersonalAll = function() {
   renderPersonalParties();
 };
 
-// ── FIX 1: goToDash — currentUser check अनिवार्य ──────────────────────
+// ── Authentication-aware onboarding and profile routing ─────────────
+function _profileStorageKey() {
+  return 'hk_profile_' + (currentUser && currentUser.id ? currentUser.id : 'unknown');
+}
+function showStandaloneScreen(id) {
+  document.body.classList.add('onboarding-only');
+  document.body.classList.remove('auth-only');
+  sections.forEach(function(section){ section.classList.remove('active'); });
+  var screen = document.getElementById(id);
+  if (screen) screen.classList.add('active');
+  if (sidebar) { sidebar.classList.add('hidden'); sidebar.classList.remove('open'); }
+}
+function showLanguageScreen() {
+  showStandaloneScreen('languageScreen');
+  applyAppLanguage();
+}
+window.chooseOnboardingLanguage = function(language) {
+  onboardingLanguage = language === 'en' ? 'en' : 'ne';
+  var ne = document.getElementById('chooseNepali');
+  var en = document.getElementById('chooseEnglish');
+  if (ne) ne.classList.toggle('selected', onboardingLanguage === 'ne');
+  if (en) en.classList.toggle('selected', onboardingLanguage === 'en');
+  var btn = document.getElementById('languageContinue');
+  if (btn) btn.textContent = onboardingLanguage === 'en' ? 'Continue →' : 'अगाडि बढ्नुहोस् →';
+  var h = document.getElementById('languageHeading');
+  var p = document.getElementById('languageCopy');
+  if (h) h.textContent = onboardingLanguage === 'en' ? 'Choose your language' : 'आफ्नो भाषा छान्नुहोस्';
+  if (p) p.textContent = onboardingLanguage === 'en' ? 'Select the language you want to use in the app. You can change it later in Settings.' : 'एपमा प्रयोग गर्न चाहनुभएको भाषा छान्नुहोस्। पछि Settings बाट परिवर्तन गर्न सक्नुहुन्छ।';
+};
+window.continueFromLanguage = function() {
+  try { localStorage.setItem('hk_language', onboardingLanguage); } catch(e) {}
+  LANG = onboardingLanguage;
+  applyAppLanguage();
+  showSplash(function(){ restoreSessionAfterSplash(); });
+};
+function showSplash(done) {
+  showStandaloneScreen('splashScreen');
+  applyAppLanguage();
+  window.setTimeout(function(){ if (typeof done === 'function') done(); }, 520);
+}
+function showProfileSelection() {
+  if (!currentUser) return goToAuth();
+  showStandaloneScreen('profileScreen');
+  applyAppLanguage();
+}
+function restoreSessionAfterSplash() {
+  supa.auth.getSession().then(function(res) {
+    var session = res && res.data && res.data.session;
+    if (session && session.user && session.user.id) {
+      currentUser = session.user;
+      goToDash();
+    } else {
+      currentUser = null;
+      goToAuth();
+    }
+  }).catch(function(){ goToAuth(); });
+}
+window.openLanguageSettings = function() {
+  var old = document.getElementById('languageSettingsModal');
+  if (old) old.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'languageSettingsModal';
+  overlay.className = 'language-modal-backdrop';
+  overlay.onclick = function(e){ if (e.target === overlay) overlay.remove(); };
+  var box = document.createElement('div');
+  box.className = 'language-modal';
+  var title = document.createElement('h3');
+  title.textContent = LANG === 'en' ? 'App language' : 'एपको भाषा';
+  var copy = document.createElement('p');
+  copy.textContent = LANG === 'en' ? 'Choose your preferred language.' : 'आफूलाई सहज हुने भाषा छान्नुहोस्।';
+  box.appendChild(title); box.appendChild(copy);
+  [['ne','🇳🇵 नेपाली'],['en','🇬🇧 English']].forEach(function(item){
+    var b = document.createElement('button');
+    b.textContent = item[1];
+    b.classList.toggle('selected', LANG === item[0]);
+    b.onclick = function(){
+      LANG = item[0];
+      try { localStorage.setItem('hk_language', LANG); } catch(e) {}
+      overlay.remove();
+      applyAppLanguage();
+    };
+    box.appendChild(b);
+  });
+  var close = document.createElement('button');
+  close.textContent = LANG === 'en' ? 'Cancel' : 'बन्द गर्नुहोस्';
+  close.onclick = function(){ overlay.remove(); };
+  box.appendChild(close); overlay.appendChild(box); document.body.appendChild(overlay);
+};
+function applyAppLanguage() {
+  document.documentElement.lang = LANG === 'en' ? 'en' : 'ne';
+  var en = LANG === 'en';
+  var set = function(id, value){ var el=document.getElementById(id); if(el) el.textContent=value; };
+  set('languageHeading', en ? 'Choose your language' : 'आफ्नो भाषा छान्नुहोस्');
+  set('languageCopy', en ? 'Select the language you want to use in the app. You can change it later in Settings.' : 'एपमा प्रयोग गर्न चाहनुभएको भाषा छान्नुहोस्। पछि Settings बाट परिवर्तन गर्न सक्नुहुन्छ।');
+  set('languageContinue', en ? 'Continue →' : 'अगाडि बढ्नुहोस् →');
+  set('splashTagline', en ? 'Your business. Your finances. In control.' : 'तपाईंको व्यवसाय र व्यक्तिगत हिसाब — सजिलो र सुरक्षित।');
+  set('profileEyebrow', en ? 'YOUR WORKSPACE' : 'तपाईंको कार्यक्षेत्र');
+  set('profileHeading', en ? 'Select Your Profile' : 'आफ्नो प्रोफाइल छान्नुहोस्');
+  set('profileCopy', en ? 'Choose the workspace that matches what you want to manage. You can switch later.' : 'तपाईंले व्यवस्थापन गर्न चाहेको कार्यक्षेत्र छान्नुहोस्। पछि पनि परिवर्तन गर्न सक्नुहुन्छ।');
+  set('businessProfileTitle', en ? 'Business Management' : 'व्यवसाय व्यवस्थापन');
+  set('businessProfileDesc', en ? 'Manage your business, income, expenses, loans, inventory and daily transactions in one place.' : 'व्यवसायको आम्दानी, खर्च, ऋण, स्टक र दैनिक कारोबार एउटै ठाउँमा व्यवस्थापन गर्नुहोस्।');
+  set('personalProfileTitle', en ? 'Personal Finance' : 'व्यक्तिगत वित्त व्यवस्थापन');
+  set('personalProfileDesc', en ? 'Manage your personal income, expenses, savings and financial activities.' : 'आफ्नो व्यक्तिगत आम्दानी, खर्च, बचत र आर्थिक गतिविधि व्यवस्थापन गर्नुहोस्।');
+  set('profileLanguageLink', en ? 'Change language' : 'भाषा परिवर्तन');
+  set('tabLogin', en ? 'Login' : 'लगइन');
+  set('tabSignup', en ? 'Create Account' : 'खाता खोल्नुहोस्');
+  set('loginBtn', en ? '🔐 Login' : '🔐 लगइन गर्नुहोस्');
+  set('suCreateBtn', en ? '✨ Create Account' : '✨ खाता बनाउनुहोस्');
+  set('homeHello', en ? 'Hello 👋' : 'नमस्ते 👋');
+  set('navModeLabel', en ? 'WORKSPACE' : 'कार्य क्षेत्र');
+  var authSub = document.querySelector('.auth-sub');
+  if (authSub) authSub.textContent = en ? 'Business accounting — simple and secure' : 'व्यवसायको हिसाबकिताब — सजिलो र सुरक्षित';
+  var authFooter = document.querySelector('.auth-footer');
+  if (authFooter) authFooter.textContent = en ? 'HamroKarobar — your digital finance workspace' : 'KarobaroHamro® — तपाईंको व्यवसायको डिजिटल खाता';
+  var labels = document.querySelectorAll('.auth-label');
+  if (labels.length >= 5) {
+    labels[0].textContent = en ? 'Email' : 'Email';
+    labels[1].textContent = en ? 'Password' : 'Password';
+    labels[2].textContent = en ? 'Full name *' : 'पूरा नाम *';
+    labels[3].textContent = en ? 'Email * (verification)' : 'Email * (निःशुल्क verification)';
+    labels[4].textContent = en ? 'Password * (at least 6 characters)' : 'Password * (कम्तिमा ६ अक्षर)';
+  }
+  var navText = {
+    'home':'🏠 Home','expanse':'💸 Daily expenses','income':'💰 Income','yearly':'📅 Reports',
+    'care':'🐔 Poultry care','eggs':'🥚 Egg management','kukhura':'🐣 Poultry expenses','filter':'🔎 Filters',
+    'chick':'🐤 Chicks','loan':'💳 Loans & payments','task':'☑️ Task list','perDash':'📊 Summary',
+    'perExp':'💸 Expenses','perInc':'💰 Income details','perParty':'👥 Parties / Balance'
+  };
+  if (en) {
+    Object.keys(navText).forEach(function(id){
+      var b=nav && nav.querySelector('button[data-target="'+id+'"]');
+      if(b) b.textContent=navText[id];
+    });
+    var groups=document.querySelectorAll('.nav-group-title');
+    if(groups[0]) groups[0].textContent='DAILY ACCOUNTS';
+    if(groups[1]) groups[1].textContent='FARM MANAGEMENT';
+    if(groups[2]) groups[2].textContent='OTHER MANAGEMENT';
+    if(groups[3]) groups[3].textContent='PERSONAL FINANCE';
+    var h=document.querySelector('#home .home-title'); if(h) h.textContent='What would you like to manage today?';
+    var sub=document.querySelector('#home .home-subtitle'); if(sub) sub.textContent='Choose a workspace to view and update all your records in one organized place.';
+    var ws=document.querySelectorAll('.workspace-name');
+    if(ws[0]) ws[0].textContent='Business Management'; if(ws[1]) ws[1].textContent='Personal Finance';
+    var desc=document.querySelectorAll('.workspace-desc');
+    if(desc[0]) desc[0].textContent='Daily accounts, income, expenses, poultry, eggs, loans and tasks for your business.';
+    if(desc[1]) desc[1].textContent='Household expenses, personal income and balances with people or parties.';
+    var opens=document.querySelectorAll('.workspace-open');
+    if(opens[0]) opens[0].textContent='Open business →'; if(opens[1]) opens[1].textContent='Open personal →';
+    var titles={'perDash':'📊 Personal Summary','perExp':'💸 Personal Expenses','perInc':'💰 Personal Income','perParty':'👥 Parties / Balance'};
+    Object.keys(titles).forEach(function(id){var el=document.querySelector('#'+id+' h2');if(el)el.childNodes[0].textContent=titles[id]+' ';});
+  } else {
+    var homeTitle=document.querySelector('#home .home-title'); if(homeTitle) homeTitle.textContent='आज के व्यवस्थापन गर्ने?';
+    var homeSub=document.querySelector('#home .home-subtitle'); if(homeSub) homeSub.textContent='आफ्नो कामअनुसार एउटा कार्यक्षेत्र छान्नुहोस्। सबै विवरण एउटै व्यवस्थित ठाउँबाट हेर्न र अपडेट गर्न सक्नुहुन्छ।';
+    var wsN=document.querySelectorAll('.workspace-name'); if(wsN[0])wsN[0].textContent='व्यवसाय व्यवस्थापन';if(wsN[1])wsN[1].textContent='व्यक्तिगत हिसाब';
+    var wsD=document.querySelectorAll('.workspace-desc');if(wsD[0])wsD[0].textContent='फार्म तथा व्यवसायको दैनिक हिसाब, आम्दानी–खर्च, कुखुरा, अण्डा, ऋण र कामको सूची।';if(wsD[1])wsD[1].textContent='घरायसी खर्च, व्यक्तिगत आम्दानी र व्यक्ति वा पार्टीसँगको बाँकी रकम।';
+    var wsO=document.querySelectorAll('.workspace-open');if(wsO[0])wsO[0].textContent='व्यवसाय खोल्नुहोस् →';if(wsO[1])wsO[1].textContent='व्यक्तिगत खोल्नुहोस् →';
+    var nh=nav&&nav.querySelector('button[data-target="home"]');if(nh)nh.textContent='🏠 Home';
+  }
+}
 function goToDash() {
   if (!currentUser) return;
-  document.body.classList.remove('auth-only');
+  document.body.classList.remove('auth-only','onboarding-only');
   enableInputs(true);
   try { loadUserProfile(); } catch(e) {}
-  // ALWAYS show Home after login — Business + Personal cards
-  try { showHome(); } catch(e) {
-    console.error('showHome', e);
-    sections.forEach(function(s) { s.classList.remove('active'); });
-    var h = document.getElementById('home');
-    if (h) h.classList.add('active');
+  var savedProfile = '';
+  try { savedProfile = localStorage.getItem(_profileStorageKey()) || ''; } catch(e) {}
+  if (savedProfile === 'business' || savedProfile === 'personal') {
+    enterMode(savedProfile);
+  } else {
+    showProfileSelection();
   }
-  // Preload data in background (do not change screen)
   setTimeout(function() {
     try { renderAll(); } catch(e) {}
     try { renderPersonalAll(); } catch(e) {}
   }, 50);
 }
-
 function goToAuth() {
   appMode = null;
   document.body.classList.add('auth-only');
+  document.body.classList.remove('onboarding-only');
   enableInputs(false);
   sections.forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('auth').classList.add('active');
@@ -2791,32 +3083,30 @@ function goToAuth() {
   var bn = document.getElementById('brandName'); if (bn) bn.textContent = 'KarobaroHamro®';
   var emailEl = document.getElementById('profileUserEmail'); if (emailEl) emailEl.textContent = '';
   try { switchAuthTab('login'); } catch(e) {}
+  applyAppLanguage();
 }
 
-// Restore saved session on app open
-// Start in auth-only mode until session is confirmed
-document.body.classList.add('auth-only');
-supa.auth.getSession().then(function(res) {
-  var s = res.data && res.data.session;
-  // FIX 2: user object confirm गरेपछि मात्र set गर्नुहोस्
-  if (s && s.user && s.user.id) {
-    currentUser = s.user;
-    goToDash();
+// First open: language once. Returning visits: splash, then restore auth session.
+document.body.classList.add('onboarding-only');
+try {
+  if (localStorage.getItem('hk_language')) {
+    LANG = localStorage.getItem('hk_language') === 'en' ? 'en' : 'ne';
+    showSplash(function(){ restoreSessionAfterSplash(); });
   } else {
-    goToAuth();
+    showLanguageScreen();
   }
-});
+} catch(e) {
+  showLanguageScreen();
+}
 
-// FIX 3: onAuthStateChange — currentUser सेट भएपछि मात्र renderAll चलाउनुहोस्
+// Keep auth state listener active for login/logout and token refresh.
 supa.auth.onAuthStateChange(function(event, session) {
   if (event === 'SIGNED_IN') {
-    // session र user दुवै valid छ भनी verify गर्नुहोस्
     if (session && session.user && session.user.id) {
       currentUser = session.user;
       goToDash();
     }
   } else if (event === 'TOKEN_REFRESHED') {
-    // Token silently refresh — page redirect नगर्नुहोस्, section नबदल्नुहोस्
     if (session && session.user && session.user.id) {
       currentUser = session.user;
       enableInputs(true);
@@ -2825,7 +3115,6 @@ supa.auth.onAuthStateChange(function(event, session) {
     currentUser = null;
     goToAuth();
   } else {
-    // अन्य event मा currentUser update गर्नुहोस् तर goToDash नगर्नुहोस्
     currentUser = (session && session.user && session.user.id) ? session.user : null;
   }
 });
