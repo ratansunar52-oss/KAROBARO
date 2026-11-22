@@ -118,9 +118,10 @@ function pfDashboard(){
  var chart=document.getElementById('pfCashFlowChart');if(chart){var days=[];for(var i=5;i>=0;i--){var d=new Date();d.setMonth(d.getMonth()-i);var key=d.toISOString().slice(0,7);var x={key:key,label:key.slice(5),income:0,expense:0};pf.transactions.forEach(function(t){if(String(t.occurred_on).slice(0,7)===key){if(pfIncome(t))x.income+=Number(t.amount);if(pfExpense(t))x.expense+=Number(t.amount);}});days.push(x);}var max=Math.max(1,...days.map(function(x){return Math.max(x.income,x.expense);}));chart.innerHTML='<div class="pf-bars">'+days.map(function(x){return '<div class="pf-bar-col"><div class="pf-bar-pair"><span class="pf-bar" title="Income '+pfMoney(x.income)+'" style="height:'+Math.max(2,x.income/max*100)+'%"></span><span class="pf-bar exp" title="Expense '+pfMoney(x.expense)+'" style="height:'+Math.max(2,x.expense/max*100)+'%"></span></div><small>'+x.label+'</small></div>';}).join('')+'</div><p class="pf-hint">■ Income &nbsp; <span style="color:#fb7185">■</span> Expenses · NPR';}
 }
 window.savePersonalEntry=async function(kind){
- if(pf.busyEntry)return;pf.busyEntry=true;
+ if(pf.busyEntry)return;
  var exp=kind==='expense',id=pf.editing[kind],date=document.getElementById(exp?'peDate':'piDate').value||pfDate(),desc=(document.getElementById(exp?'peItem':'piSource').value||'').trim(),amount=Number(document.getElementById(exp?'peAmt':'piAmt').value),category=document.getElementById(exp?'peCat':'piCat').value,account=document.getElementById(exp?'peAccount':'piAccount').value,note=(document.getElementById(exp?'peNote':'piNote').value||'').trim();
  if(!desc||!(amount>0)||!account)return alert(pfT('विवरण, खाता र सही रकम भर्नुहोस्।','Enter a description, account and valid amount.'));
+ pf.busyEntry=true;
  var payload={user_id:pfUid(),account_id:account,kind:kind,amount:amount,occurred_on:date,category:category,description:desc,note:note||null};
  try{var q=id?await supa.from('personal_transactions').update(payload).eq('id',id).eq('user_id',pfUid()):await supa.from('personal_transactions').insert(payload);if(q.error)throw new Error(q.error.message);window.cancelPersonalEdit(kind);await window.renderPersonalAll();alert(pfT('सेभ भयो।','Saved successfully.'));}
  catch(e){alert(pfT('सेभ गर्न सकिएन: ','Could not save: ')+e.message);}
