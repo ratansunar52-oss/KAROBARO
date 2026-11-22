@@ -583,6 +583,7 @@ body.auth-only #auth{display:block!important}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="stylesheet" href="personal-finance.css">
 </head>
 <body ontouchstart="">
 <div class="topbar">
@@ -628,11 +629,15 @@ body.auth-only #auth{display:block!important}
       <button data-target="task" data-mode="business">☑️ कार्य सूची</button>
     </div>
     <div id="navPersonal" style="display:none">
-      <div class="nav-group-title">व्यक्तिगत हिसाब</div>
-      <button data-target="perDash" data-mode="personal">📊 सारांश</button>
-      <button data-target="perExp" data-mode="personal">💸 खर्च विवरण</button>
-      <button data-target="perInc" data-mode="personal">💰 आम्दानी विवरण</button>
-      <button data-target="perParty" data-mode="personal">👥 पार्टी / बाँकी</button>
+      <div class="nav-group-title">व्यक्तिगत वित्त / Personal Finance</div>
+      <button data-target="perDash" data-mode="personal">📊 Dashboard</button>
+      <button data-target="perInc" data-mode="personal">💰 Income</button>
+      <button data-target="perExp" data-mode="personal">💸 Expenses</button>
+      <button data-target="perAccounts" data-mode="personal">🏦 Accounts</button>
+      <button data-target="perTransfers" data-mode="personal">🔁 Transfers</button>
+      <button data-target="perSavings" data-mode="personal">🎯 Savings</button>
+      <button data-target="perLoans" data-mode="personal">🤝 Loans</button>
+      <button data-target="perReports" data-mode="personal">📈 Reports</button>
     </div>
     <button type="button" class="nav-home-btn" style="margin-top:8px" onclick="openLanguageSettings()">🌐 भाषा / Language</button>
     <button type="button" class="nav-glow nav-glow-red" style="margin-top:10px" onclick="doLogout()">🚪 लगआउट</button>
@@ -808,79 +813,70 @@ body.auth-only #auth{display:block!important}
     </div>
   </section>
 
-  <!-- ══ PERSONAL DASH ══ -->
-  <section id="perDash" class="section">
-    <h2>📊 व्यक्तिगत सारांश <span class="mode-chip per">Personal</span></h2>
-    <div class="per-sum-grid">
-      <div class="summary-mini inc"><div class="lbl">कुल आम्दानी</div><div class="val" id="perTotalInc">0</div></div>
-      <div class="summary-mini exp"><div class="lbl">कुल खर्च</div><div class="val" id="perTotalExp">0</div></div>
-      <div class="summary-mini bal"><div class="lbl">बाँकी / Balance</div><div class="val" id="perBalance">0</div></div>
+  <!-- ══ PERSONAL FINANCE WORKSPACE ONLY ══ -->
+  <section id="perDash" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">HAMROKAROBAR · PERSONAL</span><h2>Personal Finance Dashboard</h2><p>तपाईंको व्यक्तिगत पैसाको सम्पूर्ण अवस्था</p></div><button class="btn" onclick="renderPersonalAll()">↻ Refresh</button></div>
+    <div class="pf-metrics">
+      <article class="pf-metric primary"><span>Available Balance</span><strong id="pfBalance">रू 0</strong><small>सबै व्यक्तिगत खाताको कुल मौज्दात</small></article>
+      <article class="pf-metric"><span>Total Income</span><strong id="pfIncome">रू 0</strong></article>
+      <article class="pf-metric"><span>Total Expenses</span><strong id="pfExpense">रू 0</strong></article>
+      <article class="pf-metric"><span>Total Savings</span><strong id="pfSavings">रू 0</strong><small>लक्ष्यमा जम्मा भएको रकम</small></article>
+      <article class="pf-metric"><span>Receivable</span><strong id="pfReceivable">रू 0</strong></article>
+      <article class="pf-metric"><span>Payable</span><strong id="pfPayable">रू 0</strong></article>
+      <article class="pf-metric"><span>Monthly Cash Flow</span><strong id="pfCashFlow">रू 0</strong></article>
     </div>
-    <div class="card-box">
-      <p style="margin:0;font-size:13px;color:#475569;line-height:1.5">यहाँ तपाईंको व्यक्तिगत आम्दानी–खर्चको जम्मा देखिन्छ। विवरण थप्न बायाँ मेनुबाट <b>व्यक्तिगत खर्च</b> वा <b>आम्दानी</b> मा जानुहोस्।</p>
-    </div>
+    <div class="pf-two-col"><div class="pf-panel"><h3>Monthly Cash Flow</h3><div id="pfCashFlowChart" class="pf-chart-empty">अहिलेसम्म कारोबार छैन</div></div><div class="pf-panel"><h3>Account Balances</h3><div id="pfAccountOverview"></div></div></div>
+    <div class="pf-panel"><h3>Recent Transactions</h3><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Details</th><th>Type</th><th>Account</th><th>Amount</th></tr></thead><tbody id="pfRecentRows"></tbody></table></div></div>
+    <p id="pfStatus" class="pf-status" role="status">Loading personal finance data…</p>
   </section>
 
-  <!-- ══ PERSONAL EXPENSE ══ -->
-  <section id="perExp" class="section">
-    <h2>💸 व्यक्तिगत खर्च <span class="mode-chip per">Personal</span></h2>
-    <div class="row">
-      <input id="peDate" type="date">
-      <input id="peItem" placeholder="के मा खर्च?">
-      <input id="peAmt" type="number" placeholder="रकम">
-      <select id="peCat">
-        <option>खाना</option><option>यातायात</option><option>घर भाडा</option>
-        <option>बिल</option><option>शिक्षा</option><option>स्वास्थ्य</option><option>अन्य</option>
-      </select>
-      <input id="peNote" placeholder="नोट (वैकल्पिक)">
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin:10px 0;flex-wrap:wrap">
-      <button id="peAdd" class="btn" onclick="savePersonalEntry('expense')">Add</button>
-    </div>
-    <div class="table-search-wrap"><span class="search-icon">🔍</span>
-      <input type="text" id="searchPe" placeholder="खोज्नुहोस्..." oninput="renderPersonalTables()">
-    </div>
-    <div class="table-scroll">
-      <table id="peTable"><thead><tr><th>मिति</th><th>वस्तु</th><th>रकम</th><th>श्रेणी</th><th>नोट</th><th>Action</th></tr></thead><tbody></tbody></table>
-    </div>
+  <section id="perInc" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">PERSONAL LEDGER</span><h2>💰 Income Management</h2><p>Salary, business, freelance, rent, interest and other income</p></div></div>
+    <div class="pf-panel"><h3 id="pfIncomeFormTitle">Add Income</h3><div class="pf-form-grid">
+      <label>Date<input id="piDate" type="date"></label><label>Source<input id="piSource" placeholder="Salary / Freelancing…"></label><label>Category<select id="piCat"><option>Salary</option><option>Business Income</option><option>Freelancing</option><option>Rental Income</option><option>Interest</option><option>Other Income</option></select></label><label>Account<select id="piAccount"></select></label><label>Amount (NPR)<input id="piAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></label><label>Note<input id="piNote" placeholder="Optional note"></label>
+    </div><div class="pf-actions"><button class="btn" onclick="savePersonalEntry('income')">Save Income</button><button class="pf-btn-muted" onclick="cancelPersonalEdit('income')">Cancel</button></div></div>
+    <div class="pf-panel"><div class="pf-list-head"><h3>Income History</h3><input id="searchPi" type="search" placeholder="Search income…" oninput="renderPersonalTables()"></div><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Source</th><th>Category</th><th>Account</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="pfIncomeRows"></tbody></table></div></div>
   </section>
 
-  <!-- ══ PERSONAL INCOME ══ -->
-  <section id="perInc" class="section">
-    <h2>💰 व्यक्तिगत आम्दानी <span class="mode-chip per">Personal</span></h2>
-    <div class="row">
-      <input id="piDate" type="date">
-      <input id="piSource" placeholder="स्रोत (तलब, व्यवसाय...)">
-      <input id="piAmt" type="number" placeholder="रकम">
-      <input id="piNote" placeholder="नोट (वैकल्पिक)">
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin:10px 0;flex-wrap:wrap">
-      <button id="piAdd" class="btn" onclick="savePersonalEntry('income')">Add</button>
-    </div>
-    <div class="table-search-wrap"><span class="search-icon">🔍</span>
-      <input type="text" id="searchPi" placeholder="खोज्नुहोस्..." oninput="renderPersonalTables()">
-    </div>
-    <div class="table-scroll">
-      <table id="piTable"><thead><tr><th>मिति</th><th>स्रोत</th><th>रकम</th><th>नोट</th><th>Action</th></tr></thead><tbody></tbody></table>
-    </div>
+  <section id="perExp" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">PERSONAL LEDGER</span><h2>💸 Expense Management</h2><p>Track daily spending and custom categories</p></div></div>
+    <div class="pf-panel"><h3 id="pfExpenseFormTitle">Add Expense</h3><div class="pf-form-grid">
+      <label>Date<input id="peDate" type="date"></label><label>Description<input id="peItem" placeholder="What did you spend on?"></label><label>Category<select id="peCat"><option>Food & Grocery</option><option>House Rent</option><option>Electricity & Water</option><option>Transportation</option><option>Medical</option><option>Education</option><option>Shopping</option><option>Entertainment</option><option>Travel</option><option>Family Expenses</option><option>Other Expenses</option></select></label><label>Account<select id="peAccount"></select></label><label>Amount (NPR)<input id="peAmt" type="number" min="0.01" step="0.01" placeholder="0.00"></label><label>Note<input id="peNote" placeholder="Optional note"></label>
+    </div><div class="pf-actions"><button class="btn" onclick="savePersonalEntry('expense')">Save Expense</button><button class="pf-btn-muted" onclick="cancelPersonalEdit('expense')">Cancel</button><button class="pf-btn-outline" onclick="addPersonalCategory('expense')">+ Custom Category</button></div></div>
+    <div class="pf-panel"><div class="pf-list-head"><h3>Expense History</h3><input id="searchPe" type="search" placeholder="Search expenses…" oninput="renderPersonalTables()"></div><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th><th>Amount</th><th>Actions</th></tr></thead><tbody id="pfExpenseRows"></tbody></table></div></div>
   </section>
 
-  <!-- ══ PERSONAL PARTY ══ -->
-  <section id="perParty" class="section">
-    <h2>👥 पार्टी / बाँकी <span class="mode-chip per">Personal</span></h2>
-    <div class="card-box">
-      <div class="row">
-        <input id="ppName" placeholder="नाम *">
-        <input id="ppPhone" placeholder="फोन">
-        <select id="ppType"><option value="receivable">लिन बाँकी (उनीहरूले दिनुपर्ने)</option><option value="payable">दिन बाँकी (हामीले दिनुपर्ने)</option></select>
-        <input id="ppAmt" type="number" placeholder="रकम *">
-        <input id="ppNote" placeholder="नोट">
-      </div>
-      <div style="text-align:right;margin-top:10px">
-        <button class="btn" onclick="savePersonalParty()">सेभ गर्नुहोस्</button>
-      </div>
-    </div>
-    <div id="ppList" style="margin-top:12px"></div>
+  <section id="perAccounts" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">PERSONAL MONEY</span><h2>🏦 Multiple Accounts</h2><p>Cash, bank, eSewa, Khalti and custom wallets</p></div></div>
+    <div class="pf-panel"><h3>Add Account</h3><div class="pf-form-grid"><label>Account Name<input id="pfAccountName" placeholder="e.g. NIC Asia Savings"></label><label>Type<select id="pfAccountType"><option value="cash">Cash</option><option value="bank">Bank</option><option value="esewa">eSewa</option><option value="khalti">Khalti</option><option value="wallet">Other Digital Wallet</option><option value="custom">Custom</option></select></label><label>Opening Balance (NPR)<input id="pfOpening" type="number" step="0.01" value="0"></label><label class="pf-check-label"><input id="pfIsSavings" type="checkbox"> Savings account</label></div><div class="pf-actions"><button class="btn" onclick="addPersonalAccount()">Add Account</button></div></div>
+    <div id="pfAccountCards" class="pf-account-grid"></div>
+    <div class="pf-panel"><h3>Selected Account Transactions</h3><select id="pfAccountHistorySelect" onchange="renderPersonalAccountHistory()"></select><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead><tbody id="pfAccountHistoryRows"></tbody></table></div></div>
+  </section>
+
+  <section id="perTransfers" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">INTERNAL MOVEMENT</span><h2>🔁 Money Transfer</h2><p>Move money between your own accounts — never counted as income or expense</p></div></div>
+    <div class="pf-panel"><h3>New Transfer</h3><div class="pf-form-grid"><label>From Account<select id="pfTransferFrom"></select></label><label>To Account<select id="pfTransferTo"></select></label><label>Amount (NPR)<input id="pfTransferAmount" type="number" min="0.01" step="0.01"></label><label>Date<input id="pfTransferDate" type="date"></label><label>Note<input id="pfTransferNote" placeholder="Optional"></label></div><div class="pf-actions"><button class="btn" onclick="savePersonalTransfer()">Transfer Money</button></div></div>
+    <div class="pf-panel"><h3>Transfer History</h3><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>From</th><th>To</th><th>Amount</th></tr></thead><tbody id="pfTransferRows"></tbody></table></div></div>
+  </section>
+
+  <section id="perSavings" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">FUTURE PLANS</span><h2>🎯 Savings Goals</h2><p>Emergency fund, monthly savings, fixed deposits and personal targets</p></div></div>
+    <div class="pf-panel"><h3>Create Savings Goal</h3><div class="pf-form-grid"><label>Goal Name<input id="pfGoalName" placeholder="Emergency Fund"></label><label>Goal Type<select id="pfGoalType"><option value="emergency">Emergency Fund</option><option value="monthly">Monthly Savings</option><option value="fixed_deposit">Fixed Deposit</option><option value="general">General Goal</option></select></label><label>Target Amount (NPR)<input id="pfGoalTarget" type="number" min="1" step="0.01"></label><label>Target Date<input id="pfGoalDate" type="date"></label><label>Note<input id="pfGoalNote"></label></div><div class="pf-actions"><button class="btn" onclick="addPersonalSavingsGoal()">Create Goal</button></div></div>
+    <div id="pfSavingsGoals" class="pf-goal-grid"></div>
+    <div class="pf-panel"><h3>Add Savings to Goal</h3><div class="pf-form-grid"><label>Goal<select id="pfContributionGoal"></select></label><label>Amount (NPR)<input id="pfContributionAmount" type="number" min="0.01" step="0.01"></label><label>Date<input id="pfContributionDate" type="date"></label><label>Note<input id="pfContributionNote"></label></div><div class="pf-actions"><button class="btn" onclick="addPersonalSavingsContribution()">Add Savings</button></div><p class="pf-hint">Savings contributions track progress only; they do not create income or expense entries, so totals are not double-counted.</p></div>
+  </section>
+
+  <section id="perLoans" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">BORROWING & LENDING</span><h2>🤝 Loan Management</h2><p>Track principal, interest, due dates, repayments and outstanding balances</p></div></div>
+    <div class="pf-panel"><h3>Add Loan</h3><div class="pf-form-grid"><label>Type<select id="pfLoanType"><option value="borrowed">Money Borrowed</option><option value="lent">Money Lent</option></select></label><label>Person / Institution<input id="pfLoanParty" placeholder="Name"></label><label>Principal (NPR)<input id="pfLoanPrincipal" type="number" min="0.01" step="0.01"></label><label>Interest Rate (% p.a.)<input id="pfLoanRate" type="number" min="0" step="0.01" value="0"></label><label>Due Date<input id="pfLoanDue" type="date"></label><label>Account<select id="pfLoanAccount"></select></label><label>Note<input id="pfLoanNote"></label></div><div class="pf-actions"><button class="btn" onclick="addPersonalLoan()">Save Loan</button></div></div>
+    <div id="pfLoanCards" class="pf-goal-grid"></div>
+    <div class="pf-panel"><h3>Record Repayment</h3><div class="pf-form-grid"><label>Loan<select id="pfPayLoan"></select></label><label>Account<select id="pfPayAccount"></select></label><label>Principal Paid<input id="pfPayPrincipal" type="number" min="0" step="0.01"></label><label>Interest Paid / Received<input id="pfPayInterest" type="number" min="0" step="0.01" value="0"></label><label>Date<input id="pfPayDate" type="date"></label><label>Note<input id="pfPayNote"></label></div><div class="pf-actions"><button class="btn" onclick="savePersonalLoanPayment()">Save Repayment</button></div></div>
+    <div class="pf-panel"><h3>Repayment History</h3><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Loan</th><th>Principal</th><th>Interest</th><th>Action</th></tr></thead><tbody id="pfPaymentRows"></tbody></table></div></div>
+  </section>
+
+  <section id="perReports" class="section pf-section">
+    <div class="pf-heading"><div><span class="pf-kicker">FINANCIAL INSIGHTS</span><h2>📈 Financial Reports</h2><p>Daily, weekly, monthly and yearly transaction reports</p></div><div class="pf-actions"><button class="pf-btn-outline" onclick="exportPersonalCSV()">Export Excel (CSV)</button><button class="pf-btn-outline" onclick="printPersonalReport()">Export PDF / Print</button></div></div>
+    <div class="pf-panel"><div class="pf-form-grid"><label>From<input id="pfReportFrom" type="date" onchange="renderPersonalReports()"></label><label>To<input id="pfReportTo" type="date" onchange="renderPersonalReports()"></label><label>Preset<select id="pfReportPreset" onchange="applyPersonalReportPreset(this.value)"><option value="all">All time</option><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option><option value="year">This year</option></select></label></div><div class="pf-metrics pf-report-metrics"><article class="pf-metric"><span>Income</span><strong id="pfReportIncome">रू 0</strong></article><article class="pf-metric"><span>Expenses</span><strong id="pfReportExpense">रू 0</strong></article><article class="pf-metric"><span>Net Cash Flow</span><strong id="pfReportNet">रू 0</strong></article></div><div id="pfReportChart" class="pf-chart-empty"></div><h3>Category-wise Breakdown</h3><div id="pfCategoryReport"></div><h3>Account-wise Breakdown</h3><div id="pfAccountReport"></div><div class="table-scroll"><table class="pf-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th><th>Type</th><th>Amount</th></tr></thead><tbody id="pfReportRows"></tbody></table></div></div>
   </section>
 
   <!-- ══ EXPANSE ══ -->
@@ -3205,7 +3201,8 @@ function printSection(sectionId) {
   if (!section) return alert('Section not found');
   const win = window.open('', '_blank', 'width=900,height=700');
   const styles = `<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#06b6d4;color:#fff}</style>`;
-  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body class="onboarding-only">${section.innerHTML}</body></html>`);
+  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body class="onboarding-only">${section.innerHTML}<script src="personal-finance.js"></script>
+</body></html>`);
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 300);
 }
