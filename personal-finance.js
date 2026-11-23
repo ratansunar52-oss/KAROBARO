@@ -31,9 +31,15 @@ function pfApplyStaticLanguage(){
  if(nav){var w2=document.createTreeWalker(nav,NodeFilter.SHOW_TEXT,null,false),n2=[];while(w2.nextNode())n2.push(w2.currentNode);n2.forEach(function(n){var v=n.nodeValue.trim();if(map[v])n.nodeValue=n.nodeValue.replace(v,map[v]);});}
 }
 window.applyPersonalFinanceLanguage=function(){
- pfApplyStaticLanguage();
  if(pf.ready){pfPopulate();pfDashboard();window.renderPersonalTables();pfRenderAccounts();pfRenderTransfers();pfRenderSavings();pfRenderLoans();window.renderPersonalReports();}
+ pfApplyStaticLanguage();
 };
+// Re-run the Personal Finance translations whenever the app's language setting changes.
+if(typeof window.applyAppLanguage==='function'&&!window._pfLanguageHooked){
+ var pfOriginalApplyAppLanguage=window.applyAppLanguage;
+ window.applyAppLanguage=function(){pfOriginalApplyAppLanguage.apply(this,arguments);if(window.applyPersonalFinanceLanguage)window.applyPersonalFinanceLanguage();};
+ window._pfLanguageHooked=true;
+}
 
 function pfEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function pfMoney(v){return 'रू '+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
