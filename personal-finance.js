@@ -12,6 +12,29 @@ var pfDefaultAccounts=[
 function pfUser(){return window.currentUser || currentUser || null;}
 function pfUid(){var u=pfUser();return u&&u.id?u.id:null;}
 function pfT(ne,en){return (window.LANG||LANG)==='en'?en:ne;}
+
+function pfApplyStaticLanguage(){
+ var sections=['perDash','perInc','perExp','perAccounts','perTransfers','perSavings','perLoans','perReports'];
+ var pairs=[
+ ['Personal Finance Dashboard','व्यक्तिगत वित्त ड्यासबोर्ड'],['Available Balance','उपलब्ध मौज्दात'],['Total Income','कुल आम्दानी'],['Total Expenses','कुल खर्च'],['Total Savings','कुल बचत'],['Receivable','प्राप्त गर्नुपर्ने'],['Payable','तिर्नुपर्ने'],['Monthly Cash Flow','मासिक नगद प्रवाह'],['Account Balances','खाता मौज्दात'],['Recent Transactions','हालैका कारोबार'],['Date','मिति'],['Details','विवरण'],['Type','प्रकार'],['Account','खाता'],['Amount','रकम'],['PERSONAL LEDGER','व्यक्तिगत हिसाब'],['Income Management','आम्दानी व्यवस्थापन'],['Salary, business, freelance, rent, interest and other income','तलब, व्यवसाय, फ्रीलान्स, भाडा, ब्याज र अन्य आम्दानी'],['Add Income','आम्दानी थप्नुहोस्'],['Source','स्रोत'],['Category','शीर्षक'],['Amount (NPR)','रकम (NPR)'],['Note','कैफियत'],['Optional note','वैकल्पिक कैफियत'],['Save Income','आम्दानी सुरक्षित गर्नुहोस्'],['Cancel','रद्द गर्नुहोस्'],['Income History','आम्दानी विवरण'],['Search income…','आम्दानी खोज्नुहोस्…'],['Expense Management','खर्च व्यवस्थापन'],['Track daily spending and custom categories','दैनिक खर्च र आफ्ना शीर्षकहरू व्यवस्थापन गर्नुहोस्'],['Add Expense','खर्च थप्नुहोस्'],['Description','विवरण'],['What did you spend on?','केमा खर्च गर्नुभयो?'],['Save Expense','खर्च सुरक्षित गर्नुहोस्'],['+ Custom Category','+ नयाँ शीर्षक'],['Expense History','खर्च विवरण'],['Search expenses…','खर्च खोज्नुहोस्…'],['PERSONAL MONEY','व्यक्तिगत रकम'],['Multiple Accounts','बहु खाताहरू'],['Cash, bank, eSewa, Khalti and custom wallets','नगद, बैंक, eSewa, Khalti र अन्य वालेट'],['Add Account','खाता थप्नुहोस्'],['Account Name','खाताको नाम'],['Opening Balance (NPR)','सुरुको मौज्दात (NPR)'],['Savings account','बचत खाता'],['Selected Account Transactions','छानिएको खाताका कारोबार'],['All accounts','सबै खाताहरू'],['INTERNAL MOVEMENT','आन्तरिक रकम स्थानान्तरण'],['Money Transfer','रकम स्थानान्तरण'],['Move money between your own accounts — never counted as income or expense','आफ्नै खाताहरूबीच रकम सार्नुहोस् — आम्दानी वा खर्चमा गणना हुँदैन'],['New Transfer','नयाँ स्थानान्तरण'],['From Account','कुन खाताबाट'],['To Account','कुन खातामा'],['Transfer Money','रकम स्थानान्तरण गर्नुहोस्'],['Transfer History','स्थानान्तरण विवरण'],['FUTURE PLANS','भविष्यको योजना'],['Savings Goals','बचत लक्ष्य'],['Create Savings Goal','बचत लक्ष्य बनाउनुहोस्'],['Goal Name','लक्ष्यको नाम'],['Goal Type','लक्ष्यको प्रकार'],['Target Amount (NPR)','लक्ष्य रकम (NPR)'],['Target Date','लक्ष्य मिति'],['Create Goal','लक्ष्य बनाउनुहोस्'],['Add Savings to Goal','लक्ष्यमा बचत थप्नुहोस्'],['Goal','लक्ष्य'],['Add Savings','बचत थप्नुहोस्'],['BORROWING & LENDING','ऋण लिने र दिने'],['Loan Management','ऋण व्यवस्थापन'],['Track principal, interest, due dates, repayments and outstanding balances','साँवा, ब्याज, भुक्तानी मिति, किस्ता र बाँकी रकमको हिसाब राख्नुहोस्'],['Add Loan','ऋण थप्नुहोस्'],['Money Borrowed','लिएको ऋण'],['Money Lent','दिएको ऋण'],['Person / Institution','व्यक्ति / संस्था'],['Principal (NPR)','साँवा (NPR)'],['Interest Rate (% p.a.)','ब्याजदर (% वार्षिक)'],['Due Date','भुक्तानी मिति'],['Save Loan','ऋण सुरक्षित गर्नुहोस्'],['Record Repayment','किस्ता दर्ता गर्नुहोस्'],['Loan','ऋण'],['Principal Paid','तिरेको साँवा'],['Interest Paid / Received','तिरेको / पाएको ब्याज'],['Save Repayment','किस्ता सुरक्षित गर्नुहोस्'],['Repayment History','किस्ता विवरण'],['FINANCIAL INSIGHTS','वित्तीय विश्लेषण'],['Financial Reports','वित्तीय प्रतिवेदन'],['Daily, weekly, monthly and yearly transaction reports','दैनिक, साप्ताहिक, मासिक र वार्षिक कारोबार प्रतिवेदन'],['Export Excel (CSV)','Excel निर्यात (CSV)'],['Export PDF / Print','PDF निर्यात / प्रिन्ट'],['From','देखि'],['To','सम्म'],['Preset','अवधि'],['All time','सबै समय'],['Today','आज'],['This week','यो हप्ता'],['This month','यो महिना'],['This year','यो वर्ष'],['Net Cash Flow','खुद नगद प्रवाह'],['Category-wise Breakdown','शीर्षकअनुसार विवरण'],['Account-wise Breakdown','खाताअनुसार विवरण'],['Actions','कार्य'],['No transactions yet','अहिलेसम्म कारोबार छैन'],['No accounts','कुनै खाता छैन'],['No transfers yet','अहिलेसम्म स्थानान्तरण छैन'],['No repayments','किस्ता विवरण छैन'],['No loans recorded','ऋण दर्ता गरिएको छैन'],['No report data','प्रतिवेदन विवरण छैन'],['No expense categories in this period','यस अवधिमा खर्चको शीर्षक छैन'],['No account activity','खातामा कारोबार छैन'],['Create your first savings goal','पहिलो बचत लक्ष्य बनाउनुहोस्'],['Borrowed','लिएको ऋण'],['Lent','दिएको ऋण'],['Principal','साँवा'],['Interest','ब्याज'],['Remaining','बाँकी'],['Saved','बचत'],['Delete','हटाउनुहोस्'],['Record payment','भुक्तानी दर्ता'],['Account:','खाता:'],['Other Digital Wallet','अन्य डिजिटल वालेट'],['Emergency Fund','आपतकालीन कोष'],['Monthly Savings','मासिक बचत'],['Fixed Deposit','मुद्दती बचत'],['General Goal','सामान्य लक्ष्य'],['Food & Grocery','खाना तथा किराना'],['House Rent','घर भाडा'],['Electricity & Water','बिजुली तथा पानी'],['Transportation','यातायात'],['Medical','स्वास्थ्य उपचार'],['Education','शिक्षा'],['Shopping','किनमेल'],['Entertainment','मनोरञ्जन'],['Travel','यात्रा'],['Family Expenses','पारिवारिक खर्च'],['Other Expenses','अन्य खर्च'],['Business Income','व्यवसाय आम्दानी'],['Freelancing','फ्रीलान्स आम्दानी'],['Rental Income','भाडा आम्दानी'],['Other Income','अन्य आम्दानी']
+ ];
+ var en=(window.LANG||LANG)==='en',map={};
+ pairs.forEach(function(p){map[en?p[1]:p[0]]=en?p[0]:p[1];});
+ sections.forEach(function(id){
+  var el=document.getElementById(id);if(!el)return;
+  var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false),nodes=[];
+  while(w.nextNode())nodes.push(w.currentNode);
+  nodes.forEach(function(n){var raw=n.nodeValue,trim=raw.trim();if(map[trim])n.nodeValue=raw.replace(trim,map[trim]);});
+  el.querySelectorAll('[placeholder]').forEach(function(x){var v=x.getAttribute('placeholder');if(map[v])x.setAttribute('placeholder',map[v]);});
+ });
+ var nav=document.getElementById('navPersonal');
+ if(nav){var w2=document.createTreeWalker(nav,NodeFilter.SHOW_TEXT,null,false),n2=[];while(w2.nextNode())n2.push(w2.currentNode);n2.forEach(function(n){var v=n.nodeValue.trim();if(map[v])n.nodeValue=n.nodeValue.replace(v,map[v]);});}
+}
+window.applyPersonalFinanceLanguage=function(){
+ pfApplyStaticLanguage();
+ if(pf.ready){pfPopulate();pfDashboard();window.renderPersonalTables();pfRenderAccounts();pfRenderTransfers();pfRenderSavings();pfRenderLoans();window.renderPersonalReports();}
+};
+
 function pfEsc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function pfMoney(v){return 'रू '+Number(v||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
 function pfDate(){return new Date().toISOString().slice(0,10);}
@@ -19,9 +42,8 @@ function pfDateLabel(v){
  if(!v)return '-';
  var d=new Date(String(v).slice(0,10)+'T00:00:00');
  if(isNaN(d.getTime()))return v;
- var ad=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(d);
- var bs='';try{bs=new Intl.DateTimeFormat('ne-NP-u-ca-bikram',{day:'2-digit',month:'short',year:'numeric'}).format(d);}catch(e){}
- return bs?ad+' / '+bs:ad;
+ // Always show one English/Gregorian date; never append a second Nepali calendar date.
+ return new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric'}).format(d);
 }
 function pfStatus(msg,isError){var el=document.getElementById('pfStatus');if(el){el.textContent=msg||'';el.classList.toggle('error',!!isError);}}
 async function pfFetch(table){
@@ -82,7 +104,7 @@ function pfAccBalance(a){
 function pfLoanPaid(l){return pf.payments.filter(function(p){return p.loan_id===l.id;}).reduce(function(n,p){return n+Number(p.principal_amount||0);},0);}
 function pfLoanRemaining(l){return Math.max(0,Number(l.principal||0)-pfLoanPaid(l));}
 function pfAccountName(id){var a=pf.accounts.find(function(x){return x.id===id;});return a?a.name:'-';}
-function pfTypeLabel(k){return ({income:'Income',expense:'Expense',transfer_in:'Transfer in',transfer_out:'Transfer out',loan_principal_in:'Loan principal in',loan_principal_out:'Loan principal out',loan_interest_income:'Loan interest',loan_interest_expense:'Loan interest paid'})[k]||k;}
+function pfTypeLabel(k){var m={income:['आम्दानी','Income'],expense:['खर्च','Expense'],transfer_in:['आएको स्थानान्तरण','Transfer in'],transfer_out:['गएको स्थानान्तरण','Transfer out'],loan_principal_in:['ऋणको साँवा प्राप्त','Loan principal in'],loan_principal_out:['ऋणको साँवा भुक्तानी','Loan principal out'],loan_interest_income:['ऋण ब्याज आम्दानी','Loan interest'],loan_interest_expense:['ऋण ब्याज भुक्तानी','Loan interest paid']};return m[k]?pfT(m[k][0],m[k][1]):k;}
 function pfSetOptions(id,items,placeholder){
  var el=document.getElementById(id);if(!el)return;
  var prev=el.value;el.innerHTML='';
@@ -262,6 +284,7 @@ if(navEl)navEl.addEventListener('click',function(e){
  var id=btn.dataset.target;pfRenderPage(id);
 },true);
 window.addEventListener('load',function(){
+ window.applyPersonalFinanceLanguage();
  ['piDate','peDate','pfTransferDate','pfContributionDate','pfPayDate'].forEach(function(id){var e=document.getElementById(id);if(e&&!e.value)e.value=pfDate();});
  var oldRender=window.renderPersonalAll;
  // When the Personal workspace is already selected on session restore, hydrate its real DB records.
