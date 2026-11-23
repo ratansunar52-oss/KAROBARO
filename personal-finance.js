@@ -24,11 +24,11 @@ function pfApplyStaticLanguage(){
   var el=document.getElementById(id);if(!el)return;
   var w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT,null,false),nodes=[];
   while(w.nextNode())nodes.push(w.currentNode);
-  nodes.forEach(function(n){var raw=n.nodeValue,trim=raw.trim();if(map[trim])n.nodeValue=raw.replace(trim,map[trim]);});
+  nodes.forEach(function(n){var value=n.nodeValue;pairs.forEach(function(p){var from=en?p[1]:p[0],to=en?p[0]:p[1];if(from&&value.indexOf(from)>=0)value=value.split(from).join(to);});n.nodeValue=value;});
   el.querySelectorAll('[placeholder]').forEach(function(x){var v=x.getAttribute('placeholder');if(map[v])x.setAttribute('placeholder',map[v]);});
  });
  var nav=document.getElementById('navPersonal');
- if(nav){var w2=document.createTreeWalker(nav,NodeFilter.SHOW_TEXT,null,false),n2=[];while(w2.nextNode())n2.push(w2.currentNode);n2.forEach(function(n){var v=n.nodeValue.trim();if(map[v])n.nodeValue=n.nodeValue.replace(v,map[v]);});}
+ if(nav){var w2=document.createTreeWalker(nav,NodeFilter.SHOW_TEXT,null,false),n2=[];while(w2.nextNode())n2.push(w2.currentNode);n2.forEach(function(n){var value=n.nodeValue;pairs.forEach(function(p){var from=en?p[1]:p[0],to=en?p[0]:p[1];if(from&&value.indexOf(from)>=0)value=value.split(from).join(to);});n.nodeValue=value;});}
 }
 window.applyPersonalFinanceLanguage=function(){
  if(pf.ready){pfPopulate();pfDashboard();window.renderPersonalTables();pfRenderAccounts();pfRenderTransfers();pfRenderSavings();pfRenderLoans();window.renderPersonalReports();}
