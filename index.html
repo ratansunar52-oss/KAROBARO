@@ -3201,7 +3201,7 @@ function printSection(sectionId) {
   if (!section) return alert('Section not found');
   const win = window.open('', '_blank', 'width=900,height=700');
   const styles = `<style>body{font-family:Arial,Helvetica,sans-serif;padding:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px;text-align:left}th{background:#06b6d4;color:#fff}</style>`;
-  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body class="onboarding-only">${section.innerHTML}<script src="personal-finance.js"></script>
+  win.document.write(`<html><head><title>Print - ${sectionId}</title>${styles}</head><body class="onboarding-only">${section.innerHTML}
 </body></html>`);
   win.document.close();
   setTimeout(() => { win.focus(); win.print(); }, 300);
@@ -6048,5 +6048,6 @@ window.exportLoanPDF = async function() {
 // ═══════════════════════════════════════════════════════════════
 
 </script>
+<script src="personal-finance.js"></script>
 </body>
 </html>
