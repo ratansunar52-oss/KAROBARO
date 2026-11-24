@@ -992,6 +992,7 @@
     let currentUser = null;
     let mainChart = null;
     let displayedUserId = null;
+    let sessionGeneration = 0;
 
     function formatMoney(n) {
       const amount = Number(n);
@@ -1039,8 +1040,7 @@
       return currentUser.id;
     }
 
-    async function fetchUserRows(table, orderColumn, filters = []) {
-      const userId = getCurrentUserId();
+    async function fetchUserRows(table, orderColumn, filters = [], userId = getCurrentUserId()) {
       const pageSize = 1000;
       const rows = [];
 
@@ -1172,8 +1172,55 @@
       if (page === 'loans') loadLoans();
     }
 
+    function clearUserData() {
+      sessionGeneration += 1;
+      if (mainChart) {
+        mainChart.destroy();
+        mainChart = null;
+      }
+
+      document.getElementById('stat-income').textContent = formatMoney(0);
+      document.getElementById('stat-expense').textContent = formatMoney(0);
+      document.getElementById('stat-balance').textContent = formatMoney(0);
+      document.getElementById('stat-loans').textContent = formatMoney(0);
+      document.getElementById('recent-tbody').innerHTML =
+        '<tr><td colspan="4" class="empty-state">Loading...</td></tr>';
+      document.getElementById('expenses-tbody').innerHTML =
+        '<tr><td colspan="6" class="empty-state">Loading...</td></tr>';
+      document.getElementById('income-tbody').innerHTML =
+        '<tr><td colspan="5" class="empty-state">Loading...</td></tr>';
+      document.getElementById('loans-tbody').innerHTML =
+        '<tr><td colspan="7" class="empty-state">Loading...</td></tr>';
+      document.getElementById('dashboard-error').textContent = '';
+      document.getElementById('dashboard-error').style.display = 'none';
+
+      for (const [formId, cardId] of [
+        ['expense-form', 'expense-form-card'],
+        ['income-form', 'income-form-card'],
+        ['loan-form', 'loan-form-card']
+      ]) {
+        document.getElementById(formId).reset();
+        document.getElementById(cardId).classList.add('hidden');
+      }
+      document.getElementById('exp-file-name').textContent = '';
+      document.getElementById('loan-file-name').textContent = '';
+      const today = localDateInputValue();
+      document.getElementById('exp-date').value = today;
+      document.getElementById('inc-date').value = today;
+      document.getElementById('loan-date').value = today;
+
+      document.getElementById('user-name').textContent = 'User';
+      document.getElementById('user-email').textContent = '';
+      document.getElementById('user-avatar').textContent = 'U';
+      document.getElementById('dashboard-user-name').textContent = 'User';
+      document.getElementById('nav-user-name').textContent = 'User';
+      document.getElementById('nav-user-name-mobile').textContent = '';
+      closeSidebar();
+    }
+
     function showApp() {
       if (!currentUser?.id) return;
+      if (displayedUserId && displayedUserId !== currentUser.id) clearUserData();
       document.getElementById('auth-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
 
@@ -1191,6 +1238,7 @@
     }
 
     function showAuth() {
+      clearUserData();
       displayedUserId = null;
       document.getElementById('auth-screen').style.display = 'flex';
       document.getElementById('app').style.display = 'none';
@@ -1287,13 +1335,17 @@
 
     async function loadDashboard() {
       const errorEl = document.getElementById('dashboard-error');
+      const generation = sessionGeneration;
+      let userId;
       errorEl.style.display = 'none';
       try {
+        userId = getCurrentUserId();
         const [expenses, incomes, loans] = await Promise.all([
-          fetchUserRows('expenses', 'expense_date'),
-          fetchUserRows('incomes', 'income_date'),
-          fetchUserRows('loans', 'loan_date', [{ column: 'status', value: 'pending' }])
+          fetchUserRows('expenses', 'expense_date', [], userId),
+          fetchUserRows('incomes', 'income_date', [], userId),
+          fetchUserRows('loans', 'loan_date', [{ column: 'status', value: 'pending' }], userId)
         ]);
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
         const totalIncome = incomes.reduce((sum, income) => sum + Number(income.amount || 0), 0);
         const totalExpense = expenses.reduce((sum, expense) => sum + Number(expense.amount || 0), 0);
         const totalLoans = loans.reduce((sum, loan) => sum + Number(loan.amount || 0), 0);
@@ -1389,6 +1441,7 @@
           }
         });
       } catch (error) {
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
         errorEl.textContent = error.message || 'Unable to load your dashboard. Please try again.';
         errorEl.style.display = 'block';
       }
@@ -1442,9 +1495,14 @@
     async function loadExpenses() {
       const tbody = document.getElementById('expenses-tbody');
       let data;
+      const generation = sessionGeneration;
+      let userId;
       try {
-        data = await fetchUserRows('expenses', 'expense_date');
+        userId = getCurrentUserId();
+        data = await fetchUserRows('expenses', 'expense_date', [], userId);
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
       } catch (error) {
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
         tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${escapeHtml(error.message || 'Unable to load expenses. Please try again.')}</td></tr>`;
         return;
       }
@@ -1458,6 +1516,7 @@
         ...expense,
         billHref: await resolveBillUrl(expense.bill_url)
       })));
+      if (generation !== sessionGeneration || currentUser?.id !== userId) return;
       tbody.innerHTML = rows.map(expense => `
         <tr>
           <td>${formatDate(expense.expense_date)}</td>
@@ -1527,9 +1586,14 @@
     async function loadIncomes() {
       const tbody = document.getElementById('income-tbody');
       let data;
+      const generation = sessionGeneration;
+      let userId;
       try {
-        data = await fetchUserRows('incomes', 'income_date');
+        userId = getCurrentUserId();
+        data = await fetchUserRows('incomes', 'income_date', [], userId);
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
       } catch (error) {
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
         tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${escapeHtml(error.message || 'Unable to load income records. Please try again.')}</td></tr>`;
         return;
       }
@@ -1618,9 +1682,14 @@
     async function loadLoans() {
       const tbody = document.getElementById('loans-tbody');
       let data;
+      const generation = sessionGeneration;
+      let userId;
       try {
-        data = await fetchUserRows('loans', 'loan_date');
+        userId = getCurrentUserId();
+        data = await fetchUserRows('loans', 'loan_date', [], userId);
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
       } catch (error) {
+        if (generation !== sessionGeneration || currentUser?.id !== userId) return;
         tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${escapeHtml(error.message || 'Unable to load loans. Please try again.')}</td></tr>`;
         return;
       }
@@ -1634,6 +1703,7 @@
         ...loan,
         billHref: await resolveBillUrl(loan.bill_url)
       })));
+      if (generation !== sessionGeneration || currentUser?.id !== userId) return;
       tbody.innerHTML = rows.map(loan => `
         <tr>
           <td>${formatDate(loan.loan_date)}</td>
