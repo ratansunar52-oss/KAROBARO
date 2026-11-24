@@ -805,7 +805,7 @@
                 <div class="file-upload">
                   <input type="file" id="exp-bill" accept="image/*,.pdf" />
                   <div>📎 Click to upload bill</div>
-                  <p>JPG, PNG or PDF (max 5MB)</p>
+                  <p>Images or PDF (max 5MB)</p>
                   <div class="file-name" id="exp-file-name"></div>
                 </div>
               </div>
@@ -949,7 +949,7 @@
                 <div class="file-upload">
                   <input type="file" id="loan-bill" accept="image/*,.pdf" />
                   <div>📎 Click to upload bill</div>
-                  <p>JPG, PNG or PDF (max 5MB)</p>
+                  <p>Images or PDF (max 5MB)</p>
                   <div class="file-name" id="loan-file-name"></div>
                 </div>
               </div>
@@ -1098,8 +1098,11 @@
     function validateBillFile(file) {
       if (!file) return;
       const extension = file.name.split('.').pop().toLowerCase();
-      if (!['jpg', 'jpeg', 'png', 'pdf'].includes(extension)) {
-        throw new Error('Choose a JPG, PNG, or PDF file.');
+      const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'heic', 'heif', 'tif', 'tiff', 'svg'];
+      const isImage = file.type?.startsWith('image/') || (!file.type && imageExtensions.includes(extension));
+      const isPdf = file.type === 'application/pdf' || (!file.type && extension === 'pdf');
+      if (!isImage && !isPdf) {
+        throw new Error('Choose an image or PDF file.');
       }
       if (file.size > 5 * 1024 * 1024) {
         throw new Error('The bill or receipt must be 5 MB or smaller.');
@@ -1197,7 +1200,7 @@
       if (!file) return null;
       validateBillFile(file);
       const userId = getCurrentUserId();
-      const ext = file.name.split('.').pop().toLowerCase();
+      const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || (file.type === 'application/pdf' ? 'pdf' : 'img');
       const path = userId + '/' + folder + '/' + Date.now() + '.' + ext;
 
       const { error } = await sb.storage
